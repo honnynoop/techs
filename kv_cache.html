@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KV Cache 시각화</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* ── 헤더 ── */
+  .header { margin-bottom: 32px; }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .header p  { font-size: 14px; color: #555; line-height: 1.7; }
+
+  .formula {
+    display: inline-block;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #1a1a1a;
+    margin: 10px 0;
+  }
+
+  /* ── 패널 그리드 ── */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .panel {
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fafafa;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a1a1a;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .badge-red   { background: #fde8e8; color: #a32d2d; }
+  .badge-green { background: #e6f4d7; color: #2d6a11; }
+
+  /* ── 토큰 행 ── */
+  .tokens-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .tok {
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+    transition: all .3s;
+  }
+  .tok-done    { background: #deedfb; color: #0a4a7c; border-color: #7ab8ee; }
+  .tok-new     { background: #fef0cc; color: #5a3200; border-color: #f0a500; }
+  .tok-pending { background: #f0f0f0; color: #aaa;    border-color: #ddd; }
+
+  /* ── KV 테이블 ── */
+  .kv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .kv-table th {
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f0f0f0;
+  }
+  .kv-table th:first-child { text-align: left; border-radius: 4px 0 0 0; }
+  .kv-table th:last-child  { border-radius: 0 4px 0 0; }
+  .kv-table td {
+    padding: 5px 8px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+  }
+  .kv-table td:first-child { text-align: left; }
+  .kv-table tbody tr:last-child td { border-bottom: none; }
+
+  .chip {
+    display: inline-block;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+  }
+  .chip-compute { background: #fef0cc; color: #7a4200; }
+  .chip-cached  { background: #e6f4d7; color: #2d6a11; }
+
+  /* ── 통계 박스 ── */
+  .ops-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .op-box {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 8px;
+    border: 1px solid;
+  }
+  .op-compute { background: #fef0cc; border-color: #f0c060; }
+  .op-save    { background: #e6f4d7; border-color: #90c860; }
+  .op-neutral { background: #f5f5f5; border-color: #e0e0e0; }
+
+  .op-label { font-size: 10px; color: #666; margin-bottom: 2px; }
+  .op-val   { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .op-compute .op-val { color: #7a4200; }
+  .op-save    .op-val { color: #2d6a11; }
+
+  /* ── 절감률 바 ── */
+  .saving-bar { margin-bottom: 16px; }
+  .saving-label {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+  }
+  .bar-bg {
+    height: 10px;
+    border-radius: 5px;
+    background: #eee;
+    overflow: hidden;
+  }
+  .bar-fg {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #63c011, #3b8b00);
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── 범례 ── */
+  .legend {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: #666;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-dot  { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── 컨트롤 ── */
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #f5f5f5;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+  }
+
+  .btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: #1a73e8; color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1558b0; }
+  .btn-primary:disabled { opacity: .4; cursor: default; }
+  .btn-reset {
+    background: #fff;
+    color: #555;
+    border: 1px solid #d0d0d0;
+  }
+  .btn-reset:hover { background: #f0f0f0; }
+
+  .status {
+    flex: 1;
+    text-align: right;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  /* ── 설명 섹션 ── */
+  .info {
+    margin-top: 28px;
+    padding: 20px;
+    background: #f8f9ff;
+    border: 1px solid #d8e0ff;
+    border-radius: 12px;
+  }
+  .info h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .info-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .info-card h3 { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; }
+  .info-card p  { font-size: 12px; color: #555; line-height: 1.6; }
+  .info-card code {
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  @media (max-width: 600px) {
+    .panels { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>KV Cache 시각화</h1>
+    <p>LLM이 토큰을 생성할 때 이전에 계산한 Key · Value를 <strong>재사용</strong>해 중복 연산을 제거하는 기법입니다.</p>
+    <div class="formula">Attention = softmax( Q · Kᵀ / √d ) · V</div>
+    <p style="margin-top:6px">새 토큰의 Q는 매번 바뀌지만, 이전 토큰들의 <strong>K · V는 변하지 않습니다.</strong></p>
+  </div>
+
+  <!-- ── 두 패널 ── -->
+  <div class="panels">
+
+    <!-- 왼쪽: KV Cache 미적용 -->
+    <div class="panel">
+      <div class="panel-title">
+        KV Cache 미적용
+        <span class="badge badge-red">느림</span>
+      </div>
+      <div id="tok-no" class="tokens-row"></div>
+      <table class="kv-table">
+        <thead>
+          <tr><th>토큰</th><th>K 계산</th><th>V 계산</th></tr>
+        </thead>
+        <tbody id="tbl-no"></tbody>
+      </table>
+      <div class="ops-row">
+        <div class="op-box op-compute">
+          <div class="op-label">총 연산 횟수</div>
+          <div class="op-val" id="ops-no">0</div>
+        </div>
+        <div class="op-box op-neutral">
+          <div class="op-label">절약</div>
+          <div class="op-val" style="color:#aaa" id="save-no">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: KV Cache 적용 -->
+    <div class="panel">
+      <div class="panel-title">
+        KV Cache 적용
+        <span class="badge badge-green">빠름</span>
+      </div>
+      <div id="tok-yes" class="tokens-row"></div>
+      <table class="kv-table">
+        <thead>
+          <tr><th>토큰</th><th>K</th><th>V</th></tr>
+        </thead>
+        <tbody id="tbl-yes"></tbody>
+      </table>
+      <div class="ops-row">
+        <div class="op-box op-compute">
+          <div class="op-label">실제 연산</div>
+          <div class="op-val" id="ops-yes">0</div>
+        </div>
+        <div class="op-box op-save">
+          <div class="op-label">캐시 재사용</div>
+          <div class="op-val" id="saved">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 절감률 바 ── -->
+  <div class="saving-bar">
+    <div class="saving-label">
+      <span>연산 절감률 (캐시 적용 시)</span>
+      <span id="pct-label" style="font-weight:700;color:#2d6a11">0%</span>
+    </div>
+    <div class="bar-bg">
+      <div class="bar-fg" id="pct-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- ── 범례 ── -->
+  <div class="legend">
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#7ab8ee;border:1px solid #4a90cc"></div>
+      이전 토큰 (생성 완료)
+    </div>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#f0c060;border:1px solid #d09000"></div>
+      현재 생성 중인 토큰
+    </div>
+    <div class="leg-item">
+      <div class="leg-dot" style="background:#90c860;border:1px solid #60a030"></div>
+      캐시 재사용 (연산 없음)
+    </div>
+  </div>
+
+  <!-- ── 컨트롤 ── -->
+  <div class="ctrl">
+    <button class="btn btn-primary" id="btn-next" onclick="nextToken()">다음 토큰 생성</button>
+    <button class="btn btn-reset" onclick="reset()">처음부터</button>
+    <span class="status" id="status">버튼을 눌러 토큰을 하나씩 생성해보세요</span>
+  </div>
+
+  <!-- ── 설명 ── -->
+  <div class="info">
+    <h2>핵심 개념 정리</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>KV Cache 없음</h3>
+        <p>N번째 토큰 생성 시, 이전 토큰 1~N 모두의 K·V를 다시 계산합니다. 시퀀스가 길어질수록 연산이 <code>O(N²)</code>으로 증가합니다.</p>
+      </div>
+      <div class="info-card">
+        <h3>KV Cache 있음</h3>
+        <p>이전 토큰들의 K·V는 메모리에서 읽어오고, 새 토큰의 K·V만 계산합니다. 연산이 <code>O(N)</code>으로 줄어듭니다.</p>
+      </div>
+      <div class="info-card">
+        <h3>트레이드오프</h3>
+        <p>연산은 줄지만 K·V를 GPU VRAM에 저장해야 합니다. 128K 컨텍스트에서는 캐시 자체가 수십 GB를 차지하기도 합니다.</p>
+      </div>
+      <div class="info-card">
+        <h3>관련 기술</h3>
+        <p>VRAM 절감을 위해 <code>Paged Attention</code>, <code>Multi-Query Attention</code>, <code>Sliding Window</code> 등 다양한 최적화 기법이 활용됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const TOKENS = ['나는', '오늘', '카페에', '가서', '커피를', '마셨다', '끝'];
+  let step = 0;
+
+  function chip(type) {
+    if (type === 'compute') return '<span class="chip chip-compute">계산</span>';
+    return '<span class="chip chip-cached">캐시</span>';
+  }
+
+  function render() {
+    const tokNoEl  = document.getElementById('tok-no');
+    const tokYesEl = document.getElementById('tok-yes');
+    const tblNo    = document.getElementById('tbl-no');
+    const tblYes   = document.getElementById('tbl-yes');
+
+    tokNoEl.innerHTML  = '';
+    tokYesEl.innerHTML = '';
+    tblNo.innerHTML    = '';
+    tblYes.innerHTML   = '';
+
+    let opsNo = 0, opsYes = 0, savedOps = 0;
+
+    TOKENS.forEach((tok, i) => {
+      const state = i < step ? 'done' : i === step ? 'new' : 'pending';
+      const cls = 'tok tok-' + state;
+      tokNoEl.innerHTML  += `<span class="${cls}">${tok}</span>`;
+      tokYesEl.innerHTML += `<span class="${cls}">${tok}</span>`;
+
+      if (i <= step) {
+        const isNew = (i === step);
+
+        // 캐시 없음: 항상 재계산
+        tblNo.innerHTML += `<tr>
+          <td>${isNew ? '<b>' + tok + '</b>' : tok}</td>
+          <td>${chip('compute')}</td>
+          <td>${chip('compute')}</td>
+        </tr>`;
+        opsNo += 2;
+
+        // 캐시 있음: 새 토큰만 계산
+        if (isNew) {
+          tblYes.innerHTML += `<tr>
+            <td><b>${tok}</b></td>
+            <td>${chip('compute')}</td>
+            <td>${chip('compute')}</td>
+          </tr>`;
+          opsYes += 2;
+        } else {
+          tblYes.innerHTML += `<tr>
+            <td>${tok}</td>
+            <td>${chip('cached')}</td>
+            <td>${chip('cached')}</td>
+          </tr>`;
+          savedOps += 2;
+        }
+      }
+    });
+
+    const pct = opsNo > 0 ? Math.round(savedOps / opsNo * 100) : 0;
+
+    document.getElementById('ops-no').textContent  = opsNo;
+    document.getElementById('ops-yes').textContent = opsYes;
+    document.getElementById('saved').textContent   = savedOps;
+    document.getElementById('pct-label').textContent = pct + '%';
+    document.getElementById('pct-bar').style.width   = pct + '%';
+
+    const done = step >= TOKENS.length - 1;
+    document.getElementById('btn-next').disabled = done;
+    document.getElementById('status').textContent = done
+      ? `완료 — 총 ${opsNo}번 연산 중 ${savedOps}번(${pct}%) 절감`
+      : `${step + 1}번째 토큰 "${TOKENS[step]}" 생성 중`;
+  }
+
+  function nextToken() {
+    if (step < TOKENS.length - 1) { step++; render(); }
+  }
+
+  function reset() { step = 0; render(); }
+
+  render();
+</script>
+</body>
+</html>
