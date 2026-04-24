@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>statsmodels — 완전 레퍼런스 가이드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+/* ═══ RESET & ROOT ═══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #f8f7f4;
+  --bg2:      #ffffff;
+  --bg3:      #f1efe9;
+  --surf:     #ffffff;
+  --surf2:    #f4f2ec;
+  --txt:      #1a1814;
+  --txt2:     #4a4740;
+  --txt3:     #9a9690;
+  --bdr:      #e2ddd5;
+  --bdr2:     #ccc8be;
+
+  --gold:     #b87d1a;
+  --goldl:    #fdf6e8;
+  --goldd:    #8a5c0e;
+
+  --blue:     #1a6abf;
+  --bluel:    #e8f1fb;
+  --blued:    #0f4a8a;
+
+  --green:    #1a7a4a;
+  --greenl:   #e8f7ef;
+  --greend:   #0d5232;
+
+  --red:      #d03030;
+  --redl:     #fef0f0;
+
+  --purple:   #6a4abf;
+  --purplel:  #f0ecfb;
+
+  --orange:   #c45e14;
+  --orangel:  #fef3eb;
+
+  --teal:     #147a6a;
+  --teall:    #e8f7f4;
+
+  --pink:     #bf3a7a;
+  --pinkl:    #fce8f2;
+
+  --r:8px;--rl:14px;--rxl:20px;
+  --sh: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --sh2:0 4px 24px rgba(0,0,0,.10);
+  --sidebar-w:260px;
+}
+
+html{font-size:14px;scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  line-height:1.65;
+  min-height:100vh;
+}
+
+/* ═══ SCROLLBAR ══════════════════════════════════════════ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
+
+/* ═══ TOP BAR ════════════════════════════════════════════ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:58px;
+  background:rgba(248,247,244,.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:16px;padding:0 24px 0 calc(var(--sidebar-w) + 24px);
+}
+.topbar-logo{
+  font-family:'Playfair Display',serif;
+  font-size:18px;color:var(--gold);
+  white-space:nowrap;margin-right:8px;
+}
+.topbar-ver{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--txt3);
+  background:var(--surf);
+  padding:2px 8px;border-radius:99px;border:1px solid var(--bdr);
+  white-space:nowrap;
+}
+.search-wrap{flex:1;position:relative;max-width:480px}
+.search-input{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--bdr2);
+  border-radius:var(--r);
+  padding:8px 14px 8px 36px;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;color:var(--txt);
+  outline:none;transition:border-color .15s;
+}
+.search-input::placeholder{color:var(--txt3)}
+.search-input:focus{border-color:var(--gold)}
+.search-icon{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--txt3);font-size:14px;pointer-events:none;
+}
+.topbar-tags{display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.filter-tag{
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;
+  border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;
+  font-family:'JetBrains Mono',monospace;
+}
+.filter-tag.active,.filter-tag:hover{opacity:1 !important}
+.filter-tag{opacity:.6}
+
+/* ═══ SIDEBAR ════════════════════════════════════════════ */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;
+  width:var(--sidebar-w);
+  background:var(--bg2);
+  border-right:1px solid var(--bdr);
+  overflow-y:auto;
+  z-index:190;
+  padding-top:58px;
+}
+.sidebar-section{padding:20px 0 4px}
+.sidebar-section-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--txt3);
+  padding:0 18px 8px;
+}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 18px;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all .12s;font-size:13px;color:var(--txt2);
+  text-decoration:none;
+}
+.sidebar-item:hover{background:var(--bg3);color:var(--txt);border-left-color:var(--bdr2)}
+.sidebar-item.active{
+  background:var(--goldl);color:var(--goldd);
+  border-left-color:var(--gold);font-weight:600;
+}
+.sidebar-item .s-icon{font-size:14px;flex-shrink:0;width:18px;text-align:center}
+.sidebar-item .s-badge{
+  margin-left:auto;font-family:'JetBrains Mono',monospace;
+  font-size:10px;padding:1px 6px;border-radius:99px;
+  background:var(--surf);color:var(--txt3);
+}
+
+/* ═══ MAIN CONTENT ═══════════════════════════════════════ */
+.main{
+  margin-left:var(--sidebar-w);
+  padding-top:58px;
+  min-height:100vh;
+}
+.content-area{padding:32px 32px 80px}
+
+/* ═══ PAGE HEADER ════════════════════════════════════════ */
+.page-hero{
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);
+  border:1px solid var(--bdr);border-radius:var(--rxl);
+  padding:40px 44px;margin-bottom:32px;
+  position:relative;overflow:hidden;
+}
+.page-hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,125,26,.10) 0%,transparent 70%);
+  pointer-events:none;
+}
+.page-hero-eye{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:600;letter-spacing:2px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:10px;
+}
+.page-hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:36px;color:var(--txt);line-height:1.15;margin-bottom:12px;
+}
+.page-hero-title em{color:var(--gold);font-style:italic}
+.page-hero-desc{font-size:14px;color:var(--txt2);max-width:680px;line-height:1.75;margin-bottom:24px}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap}
+.h-stat{display:flex;flex-direction:column;gap:3px}
+.h-stat-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3)}
+.h-stat-v{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:var(--gold)}
+
+/* ═══ SECTION HEADER ════════════════════════════════════ */
+.section{margin-bottom:48px}
+.section-hd{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:20px;padding-bottom:14px;
+  border-bottom:1px solid var(--bdr);
+}
+.section-num{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  width:28px;height:28px;border-radius:8px;
+  background:var(--gold);color:#1a1400;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.section-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--txt)}
+.section-sub{font-size:12px;color:var(--txt3);margin-left:4px}
+
+/* ═══ CARDS ══════════════════════════════════════════════ */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.card-grid-2,.card-grid-3{grid-template-columns:1fr}}
+
+.ref-card{
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:var(--rl);padding:22px;
+  box-shadow:var(--sh);
+  transition:border-color .15s,transform .15s;
+  display:flex;flex-direction:column;gap:10px;
+}
+.ref-card:hover{border-color:var(--bdr2);transform:translateY(-1px)}
+.ref-card.hidden{display:none}
+
+.rc-top{display:flex;align-items:flex-start;gap:10px}
+.rc-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.rc-ttl{font-size:14px;font-weight:700;color:var(--txt);font-family:'JetBrains Mono',monospace}
+.rc-sub{font-size:12px;color:var(--txt2);line-height:1.5;margin-top:2px}
+.rc-tags{display:flex;gap:5px;flex-wrap:wrap}
+.rc-tag{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.3px;
+}
+
+/* ═══ CODE BLOCKS ════════════════════════════════════════ */
+.code-wrap{
+  background:var(--bg);border:1px solid var(--bdr);
+  border-radius:var(--rl);overflow:hidden;margin:10px 0;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--bdr);
+}
+.code-lang{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;
+}
+.copy-btn{
+  font-family:'Noto Sans KR',sans-serif;font-size:11px;
+  padding:3px 10px;border-radius:99px;
+  border:1px solid var(--bdr2);background:var(--bg3);
+  color:var(--txt2);cursor:pointer;transition:all .15s;
+}
+.copy-btn:hover{color:var(--gold);border-color:var(--gold)}
+pre{
+  padding:16px 18px;overflow-x:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;line-height:1.85;color:var(--txt2);
+}
+/* Syntax Highlight — Light Theme */
+.kw{color:#7c3aed}.fn{color:#1d4ed8}.st{color:#15803d}
+.nb{color:#c2410c}.cm{color:#6b7280;font-style:italic}
+.dm{color:var(--gold)}.tp{color:var(--teal)}
+.op{color:#0369a1}
+
+/* ═══ PARAM TABLE ════════════════════════════════════════ */
+.param-table{
+  width:100%;border-collapse:collapse;
+  font-size:12px;margin:8px 0;
+}
+.param-table th{
+  padding:8px 12px;text-align:left;
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--txt3);
+  background:var(--bg3);border-bottom:1px solid var(--bdr);
+}
+.param-table td{
+  padding:8px 12px;border-bottom:1px solid var(--bdr);
+  vertical-align:top;
+}
+.param-table tr:last-child td{border-bottom:none}
+.param-table tr:hover td{background:var(--bg3)}
+.param-name{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  font-weight:600;color:var(--blue);
+}
+.param-type{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  color:var(--green);white-space:nowrap;
+}
+.param-def{font-size:11.5px;color:var(--txt3)}
+.param-desc{font-size:12px;color:var(--txt2);line-height:1.5}
+
+/* ═══ CALLOUTS ═══════════════════════════════════════════ */
+.callout{
+  border-radius:var(--rl);padding:14px 18px;
+  border-left:3px solid;margin:10px 0;
+}
+.callout.gold{background:var(--goldl);border-color:var(--gold)}
+.callout.blue{background:var(--bluel);border-color:var(--blue)}
+.callout.green{background:var(--greenl);border-color:var(--green)}
+.callout.red{background:var(--redl);border-color:var(--red)}
+.callout.purple{background:var(--purplel);border-color:var(--purple)}
+.callout.teal{background:var(--teall);border-color:var(--teal)}
+.callout-title{font-size:12px;font-weight:700;margin-bottom:5px}
+.callout.gold .callout-title{color:var(--goldd)}
+.callout.blue .callout-title{color:var(--blued)}
+.callout.green .callout-title{color:var(--greend)}
+.callout.red .callout-title{color:var(--red)}
+.callout.purple .callout-title{color:var(--purple)}
+.callout.teal .callout-title{color:var(--teal)}
+.callout-body{font-size:13px;line-height:1.7;color:var(--txt2)}
+
+/* ═══ DATASET CARDS ══════════════════════════════════════ */
+.ds-card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);
+  padding:18px;display:flex;flex-direction:column;gap:8px;
+  transition:border-color .15s;
+}
+.ds-card:hover{border-color:var(--gold)}
+.ds-name{
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  font-weight:600;color:var(--gold);
+}
+.ds-desc{font-size:12px;color:var(--txt2);line-height:1.5}
+.ds-meta{display:flex;gap:10px;flex-wrap:wrap}
+.ds-pill{
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;
+  background:var(--bg3);color:var(--txt3);border:1px solid var(--bdr);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ═══ METRIC BOXES ═══════════════════════════════════════ */
+.metric-row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.metric-box{
+  flex:1;min-width:120px;
+  border-radius:var(--r);padding:12px 16px;
+  border:1px solid;text-align:center;
+}
+.metric-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:5px;
+}
+.metric-value{
+  font-family:'JetBrains Mono',monospace;
+  font-size:18px;font-weight:600;
+}
+
+/* ═══ TABS ═══════════════════════════════════════════════ */
+.tab-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px}
+.tab-btn{
+  font-size:12px;font-weight:600;padding:6px 14px;border-radius:var(--r);
+  border:1px solid var(--bdr);background:var(--bg3);color:var(--txt2);
+  cursor:pointer;transition:all .12s;font-family:'JetBrains Mono',monospace;
+}
+.tab-btn:hover{color:var(--txt);border-color:var(--bdr2)}
+.tab-btn.active{background:var(--gold);color:#1a1400;border-color:var(--gold);font-weight:700}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ═══ FORMULA BOX ════════════════════════════════════════ */
+.formula-box{
+  background:var(--bg3);border:1px solid var(--bdr2);
+  border-radius:var(--rl);padding:16px 20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;color:var(--green);
+  text-align:center;letter-spacing:.5px;margin:10px 0;
+  overflow-x:auto;
+}
+
+/* ═══ FULL-WIDTH CARD ════════════════════════════════════ */
+.full-card{
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:var(--rl);padding:24px;margin-bottom:16px;
+  box-shadow:var(--sh);
+}
+.full-card-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;font-weight:600;color:var(--txt);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.full-card-title .badge{
+  font-size:10px;padding:2px 8px;border-radius:99px;
+  background:var(--goldl);color:var(--goldd);border:1px solid var(--gold);
+}
+
+/* ═══ NO RESULTS ══════════════════════════════════════════ */
+.no-results{
+  text-align:center;padding:60px 20px;color:var(--txt3);
+  display:none;
+}
+.no-results.show{display:block}
+
+/* ═══ ANIMATIONS ══════════════════════════════════════════ */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section{animation:fadeIn .4s ease both}
+.section:nth-child(1){animation-delay:.04s}
+.section:nth-child(2){animation-delay:.08s}
+.section:nth-child(3){animation-delay:.12s}
+.section:nth-child(4){animation-delay:.16s}
+.section:nth-child(5){animation-delay:.20s}
+.section:nth-child(6){animation-delay:.24s}
+.section:nth-child(7){animation-delay:.28s}
+.section:nth-child(8){animation-delay:.32s}
+.section:nth-child(9){animation-delay:.36s}
+.section:nth-child(10){animation-delay:.40s}
+
+/* ═══ INLINE CODE ════════════════════════════════════════ */
+code{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  background:var(--bg3);border:1px solid var(--bdr);
+  padding:1px 6px;border-radius:4px;color:var(--blue);
+}
+a{color:var(--blue);text-decoration:none}
+a:hover{color:var(--goldd);text-decoration:underline}
+
+/* ═══ RESPONSIVE ═════════════════════════════════════════ */
+@media(max-width:768px){
+  :root{--sidebar-w:0px}
+  .sidebar{transform:translateX(-100%)}
+  .topbar{padding-left:16px}
+  .content-area{padding:20px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOP BAR ══════════════════════════════════════════════ -->
+<div class="topbar">
+  <span class="topbar-logo">statsmodels</span>
+  <span class="topbar-ver">v0.14.x</span>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" id="searchInput"
+           placeholder="검색: OLS, ARIMA, ttest, logit, 데이터셋..."
+           oninput="doSearch(this.value)">
+  </div>
+  <div class="topbar-tags" id="filterTags">
+    <button class="filter-tag active" data-tag="all"
+      style="border-color:#d4a843;color:#d4a843" onclick="filterTag('all',this)">ALL</button>
+    <button class="filter-tag" data-tag="linear"
+      style="border-color:#4a9eff;color:#4a9eff" onclick="filterTag('linear',this)">선형회귀</button>
+    <button class="filter-tag" data-tag="glm"
+      style="border-color:#3ecf8e;color:#3ecf8e" onclick="filterTag('glm',this)">GLM</button>
+    <button class="filter-tag" data-tag="tsa"
+      style="border-color:#f87171;color:#f87171" onclick="filterTag('tsa',this)">시계열</button>
+    <button class="filter-tag" data-tag="test"
+      style="border-color:#a78bfa;color:#a78bfa" onclick="filterTag('test',this)">통계검정</button>
+    <button class="filter-tag" data-tag="dataset"
+      style="border-color:#fb923c;color:#fb923c" onclick="filterTag('dataset',this)">데이터셋</button>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">시작하기</div>
+    <a class="sidebar-item active" href="#overview" onclick="activeSidebar(this)">
+      <span class="s-icon">📖</span>개요 & 설치
+    </a>
+    <a class="sidebar-item" href="#datasets" onclick="activeSidebar(this)">
+      <span class="s-icon">📦</span>내장 데이터셋<span class="s-badge">30+</span>
+    </a>
+    <a class="sidebar-item" href="#import" onclick="activeSidebar(this)">
+      <span class="s-icon">⚙️</span>임포트 패턴
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">선형 모델</div>
+    <a class="sidebar-item" href="#ols" onclick="activeSidebar(this)">
+      <span class="s-icon">📈</span>OLS — 선형 회귀
+    </a>
+    <a class="sidebar-item" href="#wls-gls" onclick="activeSidebar(this)">
+      <span class="s-icon">⚖️</span>WLS / GLS
+    </a>
+    <a class="sidebar-item" href="#rlm" onclick="activeSidebar(this)">
+      <span class="s-icon">🛡️</span>RLM — 로버스트
+    </a>
+    <a class="sidebar-item" href="#formula" onclick="activeSidebar(this)">
+      <span class="s-icon">🔣</span>Formula API
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">일반화 선형 모델</div>
+    <a class="sidebar-item" href="#logit" onclick="activeSidebar(this)">
+      <span class="s-icon">🔀</span>Logit / Probit
+    </a>
+    <a class="sidebar-item" href="#glm" onclick="activeSidebar(this)">
+      <span class="s-icon">🌐</span>GLM (Poisson, Gamma…)
+    </a>
+    <a class="sidebar-item" href="#mnlogit" onclick="activeSidebar(this)">
+      <span class="s-icon">📊</span>다항 로짓
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">시계열 분석 (TSA)</div>
+    <a class="sidebar-item" href="#arima" onclick="activeSidebar(this)">
+      <span class="s-icon">📉</span>ARIMA / SARIMA
+    </a>
+    <a class="sidebar-item" href="#var" onclick="activeSidebar(this)">
+      <span class="s-icon">🔗</span>VAR / VECM
+    </a>
+    <a class="sidebar-item" href="#stationarity" onclick="activeSidebar(this)">
+      <span class="s-icon">📐</span>정상성 검정 (ADF/KPSS)
+    </a>
+    <a class="sidebar-item" href="#smoothing" onclick="activeSidebar(this)">
+      <span class="s-icon">〰️</span>지수 평활 (Holt-Winters)
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">통계 검정</div>
+    <a class="sidebar-item" href="#ttest" onclick="activeSidebar(this)">
+      <span class="s-icon">🔬</span>t검정 / z검정
+    </a>
+    <a class="sidebar-item" href="#anova" onclick="activeSidebar(this)">
+      <span class="s-icon">📋</span>ANOVA / F검정
+    </a>
+    <a class="sidebar-item" href="#normality" onclick="activeSidebar(this)">
+      <span class="s-icon">🔔</span>정규성 검정
+    </a>
+    <a class="sidebar-item" href="#nonparam" onclick="activeSidebar(this)">
+      <span class="s-icon">📦</span>비모수 검정
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">고급 기법</div>
+    <a class="sidebar-item" href="#mixedlm" onclick="activeSidebar(this)">
+      <span class="s-icon">🏗️</span>혼합 효과 모델
+    </a>
+    <a class="sidebar-item" href="#survival" onclick="activeSidebar(this)">
+      <span class="s-icon">❤️</span>생존 분석
+    </a>
+    <a class="sidebar-item" href="#diagnostics" onclick="activeSidebar(this)">
+      <span class="s-icon">🔎</span>진단 & 잔차 분석
+    </a>
+    <a class="sidebar-item" href="#adp" onclick="activeSidebar(this)">
+      <span class="s-icon">⭐</span>빅분기·ADP 핵심
+    </a>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+<div class="content-area">
+<div class="no-results" id="noResults">🔍 검색 결과가 없습니다.</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     1. OVERVIEW
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="overview" data-tags="linear glm tsa test dataset">
+  <div class="page-hero">
+    <div class="page-hero-eye">Python Statistical Computing Library</div>
+    <div class="page-hero-title">
+      <em>statsmodels</em> — 완전 레퍼런스 가이드
+    </div>
+    <p class="page-hero-desc">
+      statsmodels는 통계 모델 추정·검정·탐색을 위한 파이썬 라이브러리입니다.
+      scikit-learn이 <strong>예측(prediction)</strong>에 초점을 맞추는 반면,
+      statsmodels는 <strong>추론(inference)</strong> — 즉 계수의 통계적 유의성,
+      신뢰구간, p-value, 잔차 진단에 특화되어 있습니다.
+      빅분기·ADP·ADsP 실기에서 회귀분석, 시계열, 가설검정 코드를 작성할 때 필수입니다.
+    </p>
+    <div class="hero-stats">
+      <div class="h-stat"><span class="h-stat-l">버전</span><span class="h-stat-v">0.14.x</span></div>
+      <div class="h-stat"><span class="h-stat-l">내장 데이터셋</span><span class="h-stat-v">30+</span></div>
+      <div class="h-stat"><span class="h-stat-l">주요 모델</span><span class="h-stat-v">OLS·GLM·ARIMA·VAR</span></div>
+      <div class="h-stat"><span class="h-stat-l">검정 수</span><span class="h-stat-v">40+가지</span></div>
+      <div class="h-stat"><span class="h-stat-l">호환</span><span class="h-stat-v">pandas · numpy · patsy</span></div>
+    </div>
+  </div>
+
+  <div class="section-hd">
+    <span class="section-num">1</span>
+    <span class="section-title">개요 & 설치</span>
+    <span class="section-sub">sklearn과의 차이 · 임포트 패턴</span>
+  </div>
+
+  <div class="card-grid-2" style="margin-bottom:16px">
+    <div class="callout gold">
+      <div class="callout-title">🔑 statsmodels vs sklearn 핵심 차이</div>
+      <div class="callout-body">
+        <strong>statsmodels</strong>: 통계적 <em>추론</em> 중심 — p-value, 신뢰구간,
+        AIC/BIC, 잔차 진단, 가설 검정<br><br>
+        <strong>sklearn</strong>: 머신러닝 <em>예측</em> 중심 — train/test split,
+        CV, pipeline, feature importance<br><br>
+        → 회귀 계수가 <em>유의미한지</em> 알고 싶다면 <strong>statsmodels</strong>,<br>
+        → 새 데이터를 <em>정확히 예측</em>하고 싶다면 <strong>sklearn</strong>
+      </div>
+    </div>
+    <div class="callout blue">
+      <div class="callout-title">📦 설치 & 기본 임포트</div>
+      <div class="callout-body">
+        <div class="code-wrap" style="margin:0">
+          <pre style="padding:10px 14px"><span class="cm"># 설치</span>
+pip install statsmodels
+
+<span class="cm"># 두 가지 API 스타일</span>
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm          <span class="cm"># 배열 기반</span>
+<span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf   <span class="cm"># 공식 기반</span>
+<span class="kw">from</span> statsmodels.tsa <span class="kw">import</span> stattools   <span class="cm"># 시계열</span>
+<span class="kw">from</span> statsmodels.stats <span class="kw">import</span> api <span class="kw">as</span> sms <span class="cm"># 통계검정</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 임포트 패턴 -->
+  <div id="import" class="full-card" data-tags="linear glm tsa test">
+    <div class="full-card-title">⚙️ 완전한 임포트 패턴 <span class="badge">필수 암기</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">python</span>
+        <button class="copy-btn" onclick="cp('imp1')">복사</button>
+      </div>
+      <pre id="imp1"><span class="cm"># ── 핵심 API ──────────────────────────────────────────────────</span>
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm              <span class="cm"># 메인 API (배열 입력)</span>
+<span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf     <span class="cm"># Formula API (DataFrame 입력)</span>
+
+<span class="cm"># ── 선형 모델 ─────────────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.regression.linear_model <span class="kw">import</span> OLS, WLS, GLS
+<span class="kw">from</span> statsmodels.robust.robust_linear_model <span class="kw">import</span> RLM
+
+<span class="cm"># ── 일반화 선형 모델 ──────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.genmod.generalized_linear_model <span class="kw">import</span> GLM
+<span class="kw">from</span> statsmodels.genmod <span class="kw">import</span> families     <span class="cm"># Binomial, Poisson, Gamma …</span>
+<span class="kw">from</span> statsmodels.discrete.discrete_model <span class="kw">import</span> Logit, Probit, MNLogit
+
+<span class="cm"># ── 시계열 분석 ───────────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.tsa.arima.model <span class="kw">import</span> ARIMA
+<span class="kw">from</span> statsmodels.tsa.statespace.sarimax <span class="kw">import</span> SARIMAX
+<span class="kw">from</span> statsmodels.tsa.vector_ar.var_model <span class="kw">import</span> VAR
+<span class="kw">from</span> statsmodels.tsa.holtwinters <span class="kw">import</span> ExponentialSmoothing
+<span class="kw">from</span> statsmodels.tsa <span class="kw">import</span> stattools <span class="kw">as</span> ts   <span class="cm"># ADF, KPSS, acf, pacf</span>
+
+<span class="cm"># ── 통계 검정 ─────────────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.stats <span class="kw">import</span> weightstats <span class="kw">as</span> ws   <span class="cm"># t검정</span>
+<span class="kw">from</span> statsmodels.stats.anova <span class="kw">import</span> anova_lm       <span class="cm"># ANOVA</span>
+<span class="kw">from</span> statsmodels.stats.stattools <span class="kw">import</span> (
+    durbin_watson, jarque_bera, omni_normtest
+)
+<span class="kw">from</span> statsmodels.stats.diagnostic <span class="kw">import</span> (
+    het_breuschpagan, het_white, acorr_ljungbox
+)
+<span class="kw">from</span> statsmodels.stats.proportion <span class="kw">import</span> proportions_ztest, proportion_confint
+<span class="kw">from</span> statsmodels.stats.multicomp <span class="kw">import</span> multipletests  <span class="cm"># 다중검정 보정</span>
+
+<span class="cm"># ── 혼합 효과 & 생존 ───────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.regression.mixed_linear_model <span class="kw">import</span> MixedLM
+<span class="kw">from</span> statsmodels.duration.hazard_regression <span class="kw">import</span> PHReg  <span class="cm"># Cox PH</span>
+
+<span class="cm"># ── 도구 ──────────────────────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.graphics <span class="kw">import</span> tsaplots <span class="kw">as</span> tsa_plot  <span class="cm"># ACF/PACF 그래프</span>
+<span class="kw">from</span> statsmodels.stats.outliers_influence <span class="kw">import</span> (
+    variance_inflation_factor,  <span class="cm"># VIF (다중공선성)</span>
+    OLSInfluence,               <span class="cm"># Cook's distance</span>
+)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     2. DATASETS
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="datasets" data-tags="dataset">
+  <div class="section-hd">
+    <span class="section-num">2</span>
+    <span class="section-title">내장 데이터셋 (sm.datasets)</span>
+    <span class="section-sub">30개+ 내장 데이터셋 + R 데이터셋 접근</span>
+  </div>
+
+  <div class="callout teal" style="margin-bottom:16px">
+    <div class="callout-title">📌 데이터셋 로드 3가지 방법</div>
+    <div class="callout-body">
+      <code>sm.datasets.이름.load_pandas()</code> — 내장 데이터셋<br>
+      <code>sm.datasets.get_rdataset('Cars93','MASS')</code> — R 데이터셋 (인터넷 필요)<br>
+      <code>sm.datasets.webuse('auto')</code> — Stata 데이터셋
+    </div>
+  </div>
+
+  <div class="card-grid" id="dsCards">
+    <!-- Macrodata -->
+    <div class="ds-card ref-card" data-tags="dataset tsa" data-search="macrodata 거시경제 GDP 소비 투자 시계열">
+      <div class="ds-name">macrodata</div>
+      <div class="ds-desc">미국 거시경제 분기별 데이터 (1959Q1~2009Q3). GDP, 소비, 투자, 정부지출, 인플레이션 등. 시계열 분석 표준 데이터셋.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">203행</span><span class="ds-pill">14열</span>
+        <span class="ds-pill">분기</span><span class="ds-pill">🔴 TSA</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px"><span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+data = sm.datasets.macrodata.load_pandas().data
+<span class="fn">print</span>(data.columns.tolist())
+<span class="cm"># ['year','quarter','realgdp','realcons','realinv',</span>
+<span class="cm">#  'realgovt','realdpi','cpi','m1','tbilrate',...]</span>
+gdp = data[<span class="st">'realgdp'</span>]</pre>
+      </div>
+    </div>
+
+    <!-- Longley -->
+    <div class="ds-card ref-card" data-tags="dataset linear" data-search="longley 다중공선성 경제 회귀">
+      <div class="ds-name">longley</div>
+      <div class="ds-desc">다중공선성 문제를 보여주는 경제 데이터 (1947~1962). 고용, GNP, 물가, 실업률. 다중공선성·VIF 실습에 최적.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">16행</span><span class="ds-pill">7열</span>
+        <span class="ds-pill">다중공선성</span><span class="ds-pill">🔵 선형회귀</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.longley.load_pandas().data
+<span class="cm"># 변수: TOTEMP(고용), GNPDEFL(GNP디플레이터),</span>
+<span class="cm">#       GNP, UNEMP, ARMED, POP, YEAR</span>
+y = data[<span class="st">'TOTEMP'</span>]
+X = sm.add_constant(data.drop(<span class="st">'TOTEMP'</span>, axis=<span class="nb">1</span>))</pre>
+      </div>
+    </div>
+
+    <!-- Spector -->
+    <div class="ds-card ref-card" data-tags="dataset glm" data-search="spector 이진 로지스틱 교육">
+      <div class="ds-name">spector</div>
+      <div class="ds-desc">교육심리 실험 데이터. PSI 교육법 효과 분석. 이진 로지스틱 회귀 실습 표준. grade(통과여부)가 종속변수.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">32행</span><span class="ds-pill">4열</span>
+        <span class="ds-pill">이진 분류</span><span class="ds-pill">🟢 GLM</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.spector.load_pandas().data
+<span class="cm"># GPA: 학점, TUCE: 시험점수, PSI: 교육법, GRADE: 통과</span>
+y = data[<span class="st">'GRADE'</span>]
+X = sm.add_constant(data[[<span class="st">'GPA'</span>,<span class="st">'TUCE'</span>,<span class="st">'PSI'</span>]])</pre>
+      </div>
+    </div>
+
+    <!-- CO2 -->
+    <div class="ds-card ref-card" data-tags="dataset tsa" data-search="co2 이산화탄소 계절성 시계열 Keeling">
+      <div class="ds-name">co2</div>
+      <div class="ds-desc">마우나로아 CO₂ 농도 주별 측정치 (1959~1997). 계절성과 장기 추세가 명확한 ARIMA/분해 실습 표준 데이터.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">2,225행</span><span class="ds-pill">주별</span>
+        <span class="ds-pill">계절성</span><span class="ds-pill">🔴 TSA</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.co2.load_pandas().data
+<span class="cm"># 결측값 전방 채움 후 월별 리샘플링</span>
+co2 = data[<span class="st">'co2'</span>].ffill().resample(<span class="st">'ME'</span>).mean()
+<span class="fn">print</span>(co2.head())</pre>
+      </div>
+    </div>
+
+    <!-- Sunspots -->
+    <div class="ds-card ref-card" data-tags="dataset tsa" data-search="sunspots 태양흑점 연간 AR 자기회귀">
+      <div class="ds-name">sunspots</div>
+      <div class="ds-desc">연간 태양흑점 수 (1700~2008). AR(2) 모델 적합의 고전 예시. 주기성이 강한 시계열 데이터.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">309행</span><span class="ds-pill">연간</span>
+        <span class="ds-pill">AR(2)</span><span class="ds-pill">🔴 TSA</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.sunspots.load_pandas().data
+<span class="cm"># YEAR, SUNACTIVITY</span>
+spots = data.set_index(<span class="st">'YEAR'</span>)[<span class="st">'SUNACTIVITY'</span>]</pre>
+      </div>
+    </div>
+
+    <!-- Fair -->
+    <div class="ds-card ref-card" data-tags="dataset glm" data-search="fair 결혼 외도 토빗 포아송">
+      <div class="ds-name">fair</div>
+      <div class="ds-desc">결혼 만족도와 외도 빈도 데이터. Poisson 회귀, Tobit 모델, 과산포 분석 실습에 사용.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">601행</span><span class="ds-pill">9열</span>
+        <span class="ds-pill">count data</span><span class="ds-pill">🟢 GLM</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.fair.load_pandas().data
+<span class="cm"># affairs: 외도 횟수 (count), rate_marriage: 결혼만족도</span>
+<span class="cm"># 0이 많은 포아송 → Zero-inflated 고려</span></pre>
+      </div>
+    </div>
+
+    <!-- Engel -->
+    <div class="ds-card ref-card" data-tags="dataset linear" data-search="engel 엥겔 식비 소득 분위회귀">
+      <div class="ds-name">engel</div>
+      <div class="ds-desc">엥겔 법칙 검증 데이터. 가계 소득과 식비 지출. 분위 회귀(Quantile Regression) 실습 표준.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">235행</span><span class="ds-pill">2열</span>
+        <span class="ds-pill">분위회귀</span><span class="ds-pill">🔵 선형회귀</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.engel.load_pandas().data
+<span class="cm"># income, foodexp</span>
+model = smf.<span class="fn">quantreg</span>(<span class="st">'foodexp ~ income'</span>, data)
+res   = model.<span class="fn">fit</span>(q=<span class="nb">0.5</span>)  <span class="cm"># 중앙값 회귀</span></pre>
+      </div>
+    </div>
+
+    <!-- Grunfeld -->
+    <div class="ds-card ref-card" data-tags="dataset linear" data-search="grunfeld 패널 투자 기업 패널데이터">
+      <div class="ds-name">grunfeld</div>
+      <div class="ds-desc">10개 기업의 패널 데이터 (1935~1954). 기업 투자, 시장가치, 자본. 패널 회귀 실습 표준 데이터셋.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">200행</span><span class="ds-pill">5열</span>
+        <span class="ds-pill">패널데이터</span><span class="ds-pill">🔵 선형회귀</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.grunfeld.load_pandas().data
+<span class="cm"># invest(투자), value(시장가치), capital(자본), firm, year</span>
+<span class="cm"># 10개 기업 × 20년 = 200행</span></pre>
+      </div>
+    </div>
+
+    <!-- Anes96 -->
+    <div class="ds-card ref-card" data-tags="dataset glm" data-search="anes96 설문 정치 순서형 순위">
+      <div class="ds-name">anes96</div>
+      <div class="ds-desc">1996년 미국 국가선거조사. 정치 이념, 투표 성향. 순서형 로짓(Ordered Logit) 실습에 사용.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">944행</span><span class="ds-pill">10열</span>
+        <span class="ds-pill">순서형</span><span class="ds-pill">🟢 GLM</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">data = sm.datasets.anes96.load_pandas().data
+<span class="cm"># popul, TVnews, selfLR(보수/진보), Clinton, Gore...</span></pre>
+      </div>
+    </div>
+
+    <!-- get_rdataset -->
+    <div class="ds-card ref-card" data-tags="dataset" data-search="rdataset R 데이터셋 mtcars iris">
+      <div class="ds-name">get_rdataset()</div>
+      <div class="ds-desc">R의 모든 내장 데이터셋에 접근. mtcars, iris, Boston, diamonds 등 수백 개. 인터넷 연결 필요.</div>
+      <div class="ds-meta">
+        <span class="ds-pill">수백 개</span><span class="ds-pill">인터넷 필요</span>
+        <span class="ds-pill">R 패키지</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px"><span class="cm"># 문법: get_rdataset('데이터명', '패키지명')</span>
+mtcars  = sm.datasets.<span class="fn">get_rdataset</span>(<span class="st">'mtcars'</span>,<span class="st">'datasets'</span>).data
+boston  = sm.datasets.<span class="fn">get_rdataset</span>(<span class="st">'Boston'</span>,<span class="st">'MASS'</span>).data
+titanic = sm.datasets.<span class="fn">get_rdataset</span>(<span class="st">'Titanic'</span>,<span class="st">'datasets'</span>).data
+<span class="cm"># 사용 가능한 패키지: datasets, MASS, car, ggplot2...</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     3. OLS
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="ols" data-tags="linear">
+  <div class="section-hd">
+    <span class="section-num">3</span>
+    <span class="section-title">OLS — 최소자승 선형 회귀</span>
+    <span class="section-sub">Ordinary Least Squares · 가장 기본적이고 중요한 회귀 모델</span>
+  </div>
+
+  <div class="formula-box">
+    y = Xβ + ε &nbsp;|&nbsp; β̂ = (XᵀX)⁻¹Xᵀy &nbsp;|&nbsp;
+    R² = 1 − SSres/SStot &nbsp;|&nbsp; AIC = n·ln(SSE/n) + 2k
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('ols','arr')">배열 API</button>
+    <button class="tab-btn" onclick="switchTab('ols','form')">Formula API</button>
+    <button class="tab-btn" onclick="switchTab('ols','inter')">결과 해석</button>
+    <button class="tab-btn" onclick="switchTab('ols','diag')">진단</button>
+  </div>
+
+  <div class="tab-panel active" id="ols-arr">
+    <div class="full-card">
+      <div class="full-card-title">📐 배열 기반 OLS (sm.OLS)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('ols1')">복사</button></div>
+        <pre id="ols1"><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+
+<span class="cm"># ── 데이터 준비 ──────────────────────────────────────────</span>
+data = sm.datasets.longley.load_pandas().data
+y = data[<span class="st">'TOTEMP'</span>]                        <span class="cm"># 종속변수 (1D)</span>
+X = data[[<span class="st">'GNP'</span>, <span class="st">'UNEMP'</span>, <span class="st">'ARMED'</span>, <span class="st">'POP'</span>]] <span class="cm"># 독립변수들</span>
+
+<span class="cm"># ── 상수항 추가 (필수!) ───────────────────────────────────</span>
+X = sm.<span class="fn">add_constant</span>(X)  <span class="cm"># 첫 열에 1.0 추가 → 절편(β₀) 추정</span>
+
+<span class="cm"># ── 모델 정의 및 학습 ─────────────────────────────────────</span>
+model  = sm.<span class="fn">OLS</span>(y, X)       <span class="cm"># 모델 정의</span>
+result = model.<span class="fn">fit</span>()         <span class="cm"># 최소자승 추정</span>
+
+<span class="cm"># ── 결과 출력 (매우 상세한 요약) ──────────────────────────</span>
+<span class="fn">print</span>(result.<span class="fn">summary</span>())
+
+<span class="cm"># ── 주요 결과값 개별 접근 ─────────────────────────────────</span>
+<span class="fn">print</span>(<span class="st">"계수(β̂):"</span>,       result.params)          <span class="cm"># Series</span>
+<span class="fn">print</span>(<span class="st">"p-value:"</span>,       result.pvalues)         <span class="cm"># 각 계수의 유의성</span>
+<span class="fn">print</span>(<span class="st">"R²:"</span>,            result.rsquared)        <span class="cm"># 결정계수</span>
+<span class="fn">print</span>(<span class="st">"Adj-R²:"</span>,        result.rsquared_adj)    <span class="cm"># 수정 R²</span>
+<span class="fn">print</span>(<span class="st">"AIC:"</span>,           result.aic)             <span class="cm"># 아카이케 정보기준</span>
+<span class="fn">print</span>(<span class="st">"BIC:"</span>,           result.bic)             <span class="cm"># 베이즈 정보기준</span>
+<span class="fn">print</span>(<span class="st">"F-statistic:"</span>,   result.fvalue)          <span class="cm"># F통계량</span>
+<span class="fn">print</span>(<span class="st">"F p-value:"</span>,     result.f_pvalue)        <span class="cm"># F검정 p-value</span>
+<span class="fn">print</span>(<span class="st">"MSE(잔차):"</span>,     result.mse_resid)       <span class="cm"># 잔차 평균제곱오차</span>
+<span class="fn">print</span>(<span class="st">"표준오차:"</span>,       result.bse)             <span class="cm"># 계수 표준오차</span>
+<span class="fn">print</span>(<span class="st">"95% 신뢰구간:\n"</span>, result.<span class="fn">conf_int</span>())   <span class="cm"># DataFrame</span>
+
+<span class="cm"># ── 예측 ──────────────────────────────────────────────────</span>
+y_hat = result.<span class="fn">predict</span>(X)        <span class="cm"># 학습데이터 예측</span>
+y_new = result.<span class="fn">predict</span>(X_new)    <span class="cm"># 새 데이터 예측</span>
+
+<span class="cm"># 예측 신뢰구간</span>
+pred_ci = result.<span class="fn">get_prediction</span>(X_new).<span class="fn">summary_frame</span>(alpha=<span class="nb">0.05</span>)
+<span class="cm"># mean, mean_ci_lower, mean_ci_upper, obs_ci_lower, obs_ci_upper</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="ols-form">
+    <div class="full-card">
+      <div class="full-card-title">🔣 Formula API (smf.ols) — R 스타일 수식</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('ols2')">복사</button></div>
+        <pre id="ols2"><span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+data = sm.datasets.longley.load_pandas().data
+
+<span class="cm"># ── 기본 수식 ─────────────────────────────────────────────</span>
+res1 = smf.<span class="fn">ols</span>(<span class="st">'TOTEMP ~ GNP + UNEMP + ARMED'</span>, data=data).<span class="fn">fit</span>()
+
+<span class="cm"># ── 수식 문법 (patsy 라이브러리) ──────────────────────────</span>
+<span class="cm"># y ~ x1 + x2         : 기본 (절편 자동 포함)</span>
+<span class="cm"># y ~ x1 + x2 - 1     : 절편 제외</span>
+<span class="cm"># y ~ x1 * x2          : 교호작용 (x1, x2, x1:x2 모두 포함)</span>
+<span class="cm"># y ~ x1 : x2          : 교호작용 항만</span>
+<span class="cm"># y ~ C(x)             : 범주형 처리</span>
+<span class="cm"># y ~ np.log(x)        : 변환</span>
+<span class="cm"># y ~ I(x**2)          : 수식 내 연산 (I() 필수!)</span>
+<span class="cm"># y ~ Q('weird name')  : 공백 있는 변수명</span>
+
+<span class="cm"># ── 예시: 교호작용 + 변환 ─────────────────────────────────</span>
+res2 = smf.<span class="fn">ols</span>(
+    <span class="st">'TOTEMP ~ np.log(GNP) + C(YEAR) + GNP:UNEMP'</span>,
+    data=data
+).<span class="fn">fit</span>()
+
+<span class="cm"># ── 예시: 다항 회귀 ───────────────────────────────────────</span>
+res3 = smf.<span class="fn">ols</span>(<span class="st">'y ~ x + I(x**2) + I(x**3)'</span>, data=df).<span class="fn">fit</span>()
+
+<span class="cm"># ── Formula API의 장점: 자동 더미 변수 ────────────────────</span>
+df[<span class="st">'region'</span>] = [<span class="st">'A'</span>,<span class="st">'B'</span>,<span class="st">'C'</span>] * <span class="nb">10</span>
+res4 = smf.<span class="fn">ols</span>(<span class="st">'y ~ x + C(region)'</span>, data=df).<span class="fn">fit</span>()
+<span class="cm"># C(region) → 자동으로 B, C 더미 변수 생성 (A가 기준)</span>
+<span class="cm"># C(region, Treatment('B')) → B를 기준으로 변경</span>
+
+<span class="cm"># ── 결과 비교: 중첩 모델 F검정 ────────────────────────────</span>
+<span class="kw">from</span> statsmodels.stats.anova <span class="kw">import</span> anova_lm
+res_full    = smf.<span class="fn">ols</span>(<span class="st">'y ~ x1 + x2 + x3'</span>, data=df).<span class="fn">fit</span>()
+res_reduced = smf.<span class="fn">ols</span>(<span class="st">'y ~ x1'</span>,         data=df).<span class="fn">fit</span>()
+<span class="fn">anova_lm</span>(res_reduced, res_full)  <span class="cm"># x2, x3가 유의한지 F검정</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="ols-inter">
+    <div class="full-card">
+      <div class="full-card-title">📊 summary() 출력 완전 해석</div>
+      <div class="callout gold" style="margin-bottom:12px">
+        <div class="callout-title">summary() 출력 구조</div>
+        <div class="callout-body">OLS Regression Results 표는 3개 블록으로 구성됩니다.</div>
+      </div>
+      <table class="param-table">
+        <thead><tr><th>항목</th><th>위치</th><th>의미</th><th>판단 기준</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">R-squared</td><td>상단</td><td class="param-desc">모델이 y 분산을 설명하는 비율</td><td class="param-def">높을수록 좋음 (0~1)</td></tr>
+          <tr><td class="param-name">Adj. R-sq</td><td>상단</td><td class="param-desc">특성 수 페널티 적용 R²</td><td class="param-def">특성 선택 기준으로 사용</td></tr>
+          <tr><td class="param-name">F-statistic</td><td>상단</td><td class="param-desc">모든 계수=0 귀무가설 검정</td><td class="param-def">p-value &lt; 0.05 → 모델 유의</td></tr>
+          <tr><td class="param-name">AIC / BIC</td><td>상단</td><td class="param-desc">모델 선택 정보기준</td><td class="param-def">낮을수록 좋음</td></tr>
+          <tr><td class="param-name">coef (β̂)</td><td>중간</td><td class="param-desc">추정 회귀계수</td><td class="param-def">x 1단위 증가 시 y 변화량</td></tr>
+          <tr><td class="param-name">std err</td><td>중간</td><td class="param-desc">계수 표준오차</td><td class="param-def">작을수록 추정 정확</td></tr>
+          <tr><td class="param-name">t / P>|t|</td><td>중간</td><td class="param-desc">t통계량 / p-value</td><td class="param-def">p &lt; 0.05 → 계수 유의</td></tr>
+          <tr><td class="param-name">[0.025, 0.975]</td><td>중간</td><td class="param-desc">95% 신뢰구간</td><td class="param-def">0 포함 시 비유의</td></tr>
+          <tr><td class="param-name">Durbin-Watson</td><td>하단</td><td class="param-desc">잔차 자기상관 검정</td><td class="param-def">~2 정상, &lt;1 양의 자기상관</td></tr>
+          <tr><td class="param-name">Jarque-Bera</td><td>하단</td><td class="param-desc">잔차 정규성 검정</td><td class="param-def">p &gt; 0.05 → 정규성 만족</td></tr>
+          <tr><td class="param-name">Omnibus</td><td>하단</td><td class="param-desc">잔차 왜도·첨도 검정</td><td class="param-def">p &gt; 0.05 → 정규성 만족</td></tr>
+          <tr><td class="param-name">Cond. No.</td><td>하단</td><td class="param-desc">다중공선성 지표</td><td class="param-def">&gt;1000 → 다중공선성 의심</td></tr>
+        </tbody>
+      </table>
+      <div class="code-wrap" style="margin-top:12px">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('ols3')">복사</button></div>
+        <pre id="ols3"><span class="cm"># ── 결과 개별 추출 치트시트 ───────────────────────────────</span>
+r = result  <span class="cm"># OLS fit 결과</span>
+
+r.params            <span class="cm"># 계수 Series</span>
+r.bse               <span class="cm"># 표준오차</span>
+r.tvalues           <span class="cm"># t통계량</span>
+r.pvalues           <span class="cm"># p-value</span>
+r.<span class="fn">conf_int</span>()       <span class="cm"># 신뢰구간 DataFrame (2열)</span>
+r.<span class="fn">conf_int</span>(<span class="nb">0.01</span>)  <span class="cm"># 99% 신뢰구간</span>
+r.rsquared          <span class="cm"># R²</span>
+r.rsquared_adj      <span class="cm"># 수정 R²</span>
+r.fvalue            <span class="cm"># F통계량</span>
+r.f_pvalue          <span class="cm"># F p-value</span>
+r.aic               <span class="cm"># AIC (낮을수록 좋음)</span>
+r.bic               <span class="cm"># BIC (낮을수록 좋음)</span>
+r.nobs              <span class="cm"># 관측치 수</span>
+r.df_resid          <span class="cm"># 잔차 자유도 (n - k - 1)</span>
+r.df_model          <span class="cm"># 모델 자유도 (k)</span>
+r.resid             <span class="cm"># 잔차 Series</span>
+r.fittedvalues      <span class="cm"># 적합값 ŷ</span>
+r.mse_resid         <span class="cm"># MSE = SSE/df_resid</span>
+r.mse_model         <span class="cm"># 모델 MSE</span>
+r.mse_total         <span class="cm"># 전체 MSE</span>
+r.llf               <span class="cm"># 로그 우도</span>
+
+<span class="cm"># ── 가설 검정 (개별 계수) ─────────────────────────────────</span>
+<span class="cm"># H₀: β_GNP = 0  →  단측검정 포함</span>
+t_stat, p_val, df = r.<span class="fn">t_test</span>(<span class="st">'GNP = 0'</span>).summary_frame().values[<span class="nb">0</span>]
+
+<span class="cm"># ── 선형 제약 검정 ────────────────────────────────────────</span>
+<span class="cm"># H₀: β_GNP + β_UNEMP = 1</span>
+r.<span class="fn">f_test</span>(<span class="st">'GNP + UNEMP = 1'</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="ols-diag">
+    <div class="full-card">
+      <div class="full-card-title">🔎 OLS 진단 (Diagnostics)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('ols4')">복사</button></div>
+        <pre id="ols4"><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> statsmodels.stats.stattools <span class="kw">import</span> durbin_watson
+<span class="kw">from</span> statsmodels.stats.diagnostic <span class="kw">import</span> het_breuschpagan, het_white
+<span class="kw">from</span> statsmodels.stats.outliers_influence <span class="kw">import</span> (
+    variance_inflation_factor, OLSInfluence
+)
+
+r = result  <span class="cm"># OLS fit 결과</span>
+
+<span class="cm"># ── 1. 잔차 정규성 검정 ───────────────────────────────────</span>
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> shapiro
+stat, p = <span class="fn">shapiro</span>(r.resid)
+<span class="fn">print</span>(<span class="st">f"Shapiro-Wilk: stat={stat:.4f}, p={p:.4f}"</span>)
+<span class="cm"># p > 0.05 → 정규성 만족</span>
+
+<span class="cm"># ── 2. 자기상관 검정 (Durbin-Watson) ─────────────────────</span>
+dw = <span class="fn">durbin_watson</span>(r.resid)
+<span class="fn">print</span>(<span class="st">f"Durbin-Watson: {dw:.4f}"</span>)
+<span class="cm"># ~2: 자기상관 없음, < 1: 양의 자기상관, > 3: 음의 자기상관</span>
+
+<span class="cm"># ── 3. 이분산성 검정 (Breusch-Pagan) ────────────────────</span>
+lm, lm_p, f, f_p = <span class="fn">het_breuschpagan</span>(r.resid, r.model.exog)
+<span class="fn">print</span>(<span class="st">f"Breusch-Pagan: LM={lm:.4f}, p={lm_p:.4f}"</span>)
+<span class="cm"># H₀: 등분산  → p < 0.05면 이분산 의심</span>
+
+lm2, lm2_p, _, _ = <span class="fn">het_white</span>(r.resid, r.model.exog)
+<span class="fn">print</span>(<span class="st">f"White test:    LM={lm2:.4f}, p={lm2_p:.4f}"</span>)
+
+<span class="cm"># ── 4. 다중공선성 — VIF ────────────────────────────────</span>
+X_arr = r.model.exog
+<span class="kw">for</span> i, col <span class="kw">in</span> <span class="fn">enumerate</span>(r.model.exog_names):
+    vif = <span class="fn">variance_inflation_factor</span>(X_arr, i)
+    <span class="fn">print</span>(<span class="st">f"{col:15}: VIF={vif:.2f}"</span>)
+<span class="cm"># VIF > 10 → 심각한 다중공선성</span>
+
+<span class="cm"># ── 5. 영향점 분석 (Cook's distance) ─────────────────────</span>
+infl = r.<span class="fn">get_influence</span>()
+cd   = infl.cooks_distance[<span class="nb">0</span>]   <span class="cm"># Cook's distance 배열</span>
+lev  = infl.hat_matrix_diag      <span class="cm"># 레버리지</span>
+std_resid = infl.resid_studentized_internal  <span class="cm"># 스튜던트화 잔차</span>
+
+<span class="cm"># 영향점 = Cook's D > 4/n</span>
+threshold = <span class="nb">4</span> / r.nobs
+influential = np.<span class="fn">where</span>(cd > threshold)[<span class="nb">0</span>]
+<span class="fn">print</span>(<span class="st">f"영향점 인덱스: {influential}"</span>)
+
+<span class="cm"># ── 6. 잔차 그래프 ────────────────────────────────────────</span>
+fig, axes = plt.<span class="fn">subplots</span>(<span class="nb">2</span>, <span class="nb">2</span>, figsize=(<span class="nb">10</span>, <span class="nb">8</span>))
+
+<span class="cm"># ①  잔차 vs 적합값</span>
+axes[<span class="nb">0</span>,<span class="nb">0</span>].<span class="fn">scatter</span>(r.fittedvalues, r.resid, alpha=<span class="nb">0.5</span>)
+axes[<span class="nb">0</span>,<span class="nb">0</span>].<span class="fn">axhline</span>(<span class="nb">0</span>, color=<span class="st">'r'</span>, ls=<span class="st">'--'</span>)
+axes[<span class="nb">0</span>,<span class="nb">0</span>].<span class="fn">set_title</span>(<span class="st">'잔차 vs 적합값'</span>)
+
+<span class="cm"># ② Q-Q plot</span>
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> probplot
+<span class="fn">probplot</span>(r.resid, plot=axes[<span class="nb">0</span>,<span class="nb">1</span>])
+axes[<span class="nb">0</span>,<span class="nb">1</span>].<span class="fn">set_title</span>(<span class="st">'정규 Q-Q 플롯'</span>)
+
+<span class="cm"># ③ 척도-위치 (Scale-Location)</span>
+axes[<span class="nb">1</span>,<span class="nb">0</span>].<span class="fn">scatter</span>(r.fittedvalues, np.<span class="fn">sqrt</span>(np.<span class="fn">abs</span>(std_resid)))
+axes[<span class="nb">1</span>,<span class="nb">0</span>].<span class="fn">set_title</span>(<span class="st">'Scale-Location'</span>)
+
+<span class="cm"># ④ Cook's distance</span>
+axes[<span class="nb">1</span>,<span class="nb">1</span>].<span class="fn">stem</span>(cd, markerfmt=<span class="st">','</span>)
+axes[<span class="nb">1</span>,<span class="nb">1</span>].<span class="fn">axhline</span>(threshold, color=<span class="st">'r'</span>, ls=<span class="st">'--'</span>, label=f<span class="st">'4/n={threshold:.3f}'</span>)
+axes[<span class="nb">1</span>,<span class="nb">1</span>].<span class="fn">set_title</span>(<span class="st">"Cook's Distance"</span>); axes[<span class="nb">1</span>,<span class="nb">1</span>].<span class="fn">legend</span>()
+
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     4. WLS / GLS
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="wls-gls" data-tags="linear">
+  <div class="section-hd">
+    <span class="section-num">4</span>
+    <span class="section-title">WLS / GLS — 가중/일반화 최소자승</span>
+    <span class="section-sub">이분산 · 자기상관 보정 회귀</span>
+  </div>
+  <div class="card-grid-2">
+    <div class="full-card">
+      <div class="full-card-title">⚖️ WLS — 가중 최소자승 (이분산 보정)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('wls1')">복사</button></div>
+        <pre id="wls1"><span class="cm"># WLS: 관측치마다 다른 분산이 있을 때</span>
+<span class="cm"># 분산이 큰 관측치에 낮은 가중치 부여</span>
+<span class="cm"># w_i = 1/σᵢ² (이분산의 역수)</span>
+
+weights = <span class="nb">1</span> / data[<span class="st">'variance_col'</span>]
+
+model_wls  = sm.<span class="fn">WLS</span>(y, X, weights=weights)
+result_wls = model_wls.<span class="fn">fit</span>()
+
+<span class="fn">print</span>(result_wls.<span class="fn">summary</span>())
+
+<span class="cm"># Formula API로:</span>
+res = smf.<span class="fn">wls</span>(<span class="st">'y ~ x1 + x2'</span>,
+              data=df, weights=weights).<span class="fn">fit</span>()</pre>
+      </div>
+    </div>
+    <div class="full-card">
+      <div class="full-card-title">🔗 GLS — 일반화 최소자승 (자기상관 보정)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('gls1')">복사</button></div>
+        <pre id="gls1"><span class="cm"># GLS: 잔차에 자기상관·이분산이 있을 때</span>
+<span class="cm"># β̂_GLS = (XᵀΩ⁻¹X)⁻¹ Xᵀ Ω⁻¹ y</span>
+
+<span class="cm"># AR(1) 오차 공분산 구조</span>
+model_gls = sm.<span class="fn">GLS</span>(y, X,
+    sigma=sm.regression.linear_model.<span class="fn">AR</span>(<span class="nb">1</span>))
+res_gls   = model_gls.<span class="fn">fit</span>()
+
+<span class="cm"># GLSAR: AR(p) 오차 자동 추정 반복 GLS</span>
+model_glsar = sm.<span class="fn">GLSAR</span>(y, X, rho=<span class="nb">1</span>)  <span class="cm"># AR(1) 가정</span>
+res_glsar   = <span class="fn">yule_walker</span>(y, order=<span class="nb">1</span>)  <span class="cm"># ρ 추정 후 GLS</span>
+
+res_iter = model_glsar.<span class="fn">iterative_fit</span>(maxiter=<span class="nb">10</span>)
+<span class="fn">print</span>(res_iter.rho)       <span class="cm"># 추정된 자기상관 계수</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     5. LOGIT / PROBIT / GLM
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="logit" data-tags="glm">
+  <div class="section-hd">
+    <span class="section-num">5</span>
+    <span class="section-title">Logit / Probit — 이진 분류 회귀</span>
+    <span class="section-sub">odds ratio · 한계효과 · 분류 성능</span>
+  </div>
+
+  <div class="formula-box">
+    Logit: P(y=1|X) = 1 / (1 + e^{−Xβ}) &nbsp;&nbsp;
+    Probit: P(y=1|X) = Φ(Xβ)
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">🔀 Logit / Probit 완전 코드</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('logit1')">복사</button></div>
+      <pre id="logit1"><span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf
+
+data = sm.datasets.spector.load_pandas().data
+y = data[<span class="st">'GRADE'</span>]   <span class="cm"># 이진 (0/1)</span>
+X = sm.<span class="fn">add_constant</span>(data[[<span class="st">'GPA'</span>,<span class="st">'TUCE'</span>,<span class="st">'PSI'</span>]])
+
+<span class="cm"># ── 1. Logit 모델 ─────────────────────────────────────────</span>
+logit_model  = sm.<span class="fn">Logit</span>(y, X)
+logit_result = logit_model.<span class="fn">fit</span>()
+<span class="fn">print</span>(logit_result.<span class="fn">summary</span>())
+
+<span class="cm"># ── 2. Formula API ────────────────────────────────────────</span>
+logit_r = smf.<span class="fn">logit</span>(<span class="st">'GRADE ~ GPA + TUCE + PSI'</span>, data=data).<span class="fn">fit</span>()
+probit_r= smf.<span class="fn">probit</span>(<span class="st">'GRADE ~ GPA + TUCE + PSI'</span>, data=data).<span class="fn">fit</span>()
+
+<span class="cm"># ── 3. 주요 결과 ──────────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="st">"로그 우도:"</span>,       logit_r.llf)
+<span class="fn">print</span>(<span class="st">"Pseudo R² (McF):"</span>,logit_r.prsquared)  <span class="cm"># McFadden R²</span>
+<span class="fn">print</span>(<span class="st">"AIC:"</span>,            logit_r.aic)
+
+<span class="cm"># ── 4. 오즈비 (Odds Ratio) ────────────────────────────────</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+odds_ratio = np.<span class="fn">exp</span>(logit_r.params)
+<span class="fn">print</span>(<span class="st">"오즈비:\n"</span>, odds_ratio)
+<span class="cm"># 해석: OR=2.3 → x 1단위 증가 시 성공 오즈 2.3배</span>
+
+or_ci = np.<span class="fn">exp</span>(logit_r.<span class="fn">conf_int</span>())  <span class="cm"># OR 신뢰구간</span>
+
+<span class="cm"># ── 5. 한계효과 (Marginal Effects) ───────────────────────</span>
+<span class="cm"># 연속형 변수: x 1단위 증가 시 P(y=1) 변화량</span>
+
+<span class="cm"># ① 평균에서의 한계효과 (MEM: Marginal Effects at the Mean)</span>
+me_mean = logit_r.<span class="fn">get_margeff</span>(at=<span class="st">'mean'</span>)
+<span class="fn">print</span>(me_mean.<span class="fn">summary</span>())
+
+<span class="cm"># ② 평균 한계효과 (AME: Average Marginal Effects)</span>
+me_avg = logit_r.<span class="fn">get_margeff</span>(at=<span class="st">'overall'</span>)
+<span class="fn">print</span>(me_avg.<span class="fn">summary</span>())
+
+<span class="cm"># ── 6. 예측 및 분류 ──────────────────────────────────────</span>
+proba = logit_r.<span class="fn">predict</span>(data)     <span class="cm"># P(y=1|X) 확률</span>
+y_pred = (proba >= <span class="nb">0.5</span>).astype(<span class="nb">int</span>)
+
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> classification_report, confusion_matrix
+<span class="fn">print</span>(<span class="fn">confusion_matrix</span>(y, y_pred))
+<span class="fn">print</span>(<span class="fn">classification_report</span>(y, y_pred))
+
+<span class="cm"># ROC AUC</span>
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> roc_auc_score
+<span class="fn">print</span>(<span class="st">"AUC:"</span>, <span class="fn">roc_auc_score</span>(y, proba))
+
+<span class="cm"># ── 7. LR 검정 (Likelihood Ratio Test) ───────────────────</span>
+<span class="cm"># H₀: PSI 계수 = 0</span>
+full  = smf.<span class="fn">logit</span>(<span class="st">'GRADE ~ GPA + TUCE + PSI'</span>, data=data).<span class="fn">fit</span>()
+restr = smf.<span class="fn">logit</span>(<span class="st">'GRADE ~ GPA + TUCE'</span>,       data=data).<span class="fn">fit</span>()
+lr_stat = -<span class="nb">2</span> * (restr.llf - full.llf)
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> chi2
+p_val = chi2.<span class="fn">sf</span>(lr_stat, df=<span class="nb">1</span>)
+<span class="fn">print</span>(<span class="st">f"LR stat={lr_stat:.4f}, p={p_val:.4f}"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- GLM -->
+<div class="section" id="glm" data-tags="glm">
+  <div class="section-hd">
+    <span class="section-num">6</span>
+    <span class="section-title">GLM — 일반화 선형 모델</span>
+    <span class="section-sub">Poisson · Gamma · Binomial · Tweedie · 음이항</span>
+  </div>
+
+  <div class="card-grid" style="margin-bottom:16px">
+    <div class="ref-card" data-tags="glm" data-search="poisson 포아송 count 카운트">
+      <div class="rc-top">
+        <div class="rc-icon" style="background:#e8f7ef80;color:var(--green)">📊</div>
+        <div>
+          <div class="rc-ttl">Poisson Regression</div>
+          <div class="rc-sub">카운트 데이터 (사건 발생 횟수). link=log</div>
+        </div>
+      </div>
+      <div class="rc-tags">
+        <span class="rc-tag" style="background:#e8f7ef80;color:var(--green)">count</span>
+        <span class="rc-tag" style="background:#e8f7ef80;color:var(--green)">λ = e^{Xβ}</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">res = smf.<span class="fn">poisson</span>(
+    <span class="st">'affairs ~ rate_marriage + age + yrs_married'</span>,
+    data=sm.datasets.fair.load_pandas().data
+).<span class="fn">fit</span>()
+<span class="cm"># IRR(발생률비) = exp(coef)</span>
+irr = np.<span class="fn">exp</span>(res.params)</pre>
+      </div>
+    </div>
+    <div class="ref-card" data-tags="glm" data-search="gamma 감마 연속 양수 보험">
+      <div class="rc-top">
+        <div class="rc-icon" style="background:#f0ecfb80;color:var(--purple)">Γ</div>
+        <div>
+          <div class="rc-ttl">Gamma Regression</div>
+          <div class="rc-sub">양의 연속 데이터, 오른쪽 꼬리. 보험금·소득</div>
+        </div>
+      </div>
+      <div class="rc-tags">
+        <span class="rc-tag" style="background:#f0ecfb80;color:var(--purple)">양의 연속</span>
+        <span class="rc-tag" style="background:#f0ecfb80;color:var(--purple)">link=log</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">gamma_model = sm.<span class="fn">GLM</span>(y, X,
+    family=sm.families.<span class="fn">Gamma</span>(
+        link=sm.families.links.<span class="fn">Log</span>()))
+res = gamma_model.<span class="fn">fit</span>()</pre>
+      </div>
+    </div>
+    <div class="ref-card" data-tags="glm" data-search="binomial 이항 베르누이 비율 비례">
+      <div class="rc-top">
+        <div class="rc-icon" style="background:#e8f1fb80;color:var(--blue)">%</div>
+        <div>
+          <div class="rc-ttl">Binomial (비율 데이터)</div>
+          <div class="rc-sub">n번 시도 중 k번 성공. 발생률, 합격률</div>
+        </div>
+      </div>
+      <div class="rc-tags">
+        <span class="rc-tag" style="background:#e8f1fb80;color:var(--blue)">link=logit</span>
+        <span class="rc-tag" style="background:#e8f1fb80;color:var(--blue)">0~1</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px"><span class="cm"># y = [성공수, 실패수] 또는 비율</span>
+y_binom = data[[<span class="st">'success'</span>, <span class="st">'failure'</span>]]
+res = sm.<span class="fn">GLM</span>(y_binom, X,
+    family=sm.families.<span class="fn">Binomial</span>()).<span class="fn">fit</span>()</pre>
+      </div>
+    </div>
+    <div class="ref-card" data-tags="glm" data-search="음이항 NegativeBinomial 과산포 overdispersion">
+      <div class="rc-top">
+        <div class="rc-icon" style="background:#fef0f080;color:var(--red)">NB</div>
+        <div>
+          <div class="rc-ttl">Negative Binomial</div>
+          <div class="rc-sub">과산포(overdispersion) Poisson 대체. var(y) > E(y)</div>
+        </div>
+      </div>
+      <div class="rc-tags">
+        <span class="rc-tag" style="background:#fef0f080;color:var(--red)">과산포</span>
+        <span class="rc-tag" style="background:#fef0f080;color:var(--red)">count</span>
+      </div>
+      <div class="code-wrap">
+        <pre style="padding:10px 14px">res = smf.<span class="fn">negativebinomial</span>(
+    <span class="st">'affairs ~ rate_marriage + age'</span>,
+    data=data
+).<span class="fn">fit</span>()
+<span class="fn">print</span>(<span class="st">"α (과산포 파라미터):"</span>, res.params[<span class="st">'alpha'</span>])</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">🌐 GLM 패밀리 & 링크 함수 완전 정리</div>
+    <table class="param-table">
+      <thead><tr><th>Family (분포)</th><th>기본 Link</th><th>사용 코드</th><th>적용 상황</th></tr></thead>
+      <tbody>
+        <tr><td class="param-name">Gaussian</td><td class="param-type">identity</td><td class="param-def"><code>sm.families.Gaussian()</code></td><td class="param-desc">연속 정규 → OLS와 동일</td></tr>
+        <tr><td class="param-name">Binomial</td><td class="param-type">logit</td><td class="param-def"><code>sm.families.Binomial()</code></td><td class="param-desc">이진/비율 데이터</td></tr>
+        <tr><td class="param-name">Poisson</td><td class="param-type">log</td><td class="param-def"><code>sm.families.Poisson()</code></td><td class="param-desc">카운트 (등분산)</td></tr>
+        <tr><td class="param-name">NegativeBinomial</td><td class="param-type">log</td><td class="param-def"><code>sm.families.NegativeBinomial()</code></td><td class="param-desc">카운트 (과산포)</td></tr>
+        <tr><td class="param-name">Gamma</td><td class="param-type">inverse</td><td class="param-def"><code>sm.families.Gamma(sm.families.links.Log())</code></td><td class="param-desc">양의 연속, 우측 치우침</td></tr>
+        <tr><td class="param-name">InverseGaussian</td><td class="param-type">inverse squared</td><td class="param-def"><code>sm.families.InverseGaussian()</code></td><td class="param-desc">양의 연속, 극단 치우침</td></tr>
+        <tr><td class="param-name">Tweedie</td><td class="param-type">log</td><td class="param-def"><code>sm.families.Tweedie(var_power=1.5)</code></td><td class="param-desc">복합 포아송-감마</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap" style="margin-top:12px">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('glm2')">복사</button></div>
+      <pre id="glm2"><span class="cm"># GLM 공통 워크플로우</span>
+model = sm.<span class="fn">GLM</span>(
+    y, X,
+    family=sm.families.<span class="fn">Poisson</span>(           <span class="cm"># 분포 패밀리</span>
+        link=sm.families.links.<span class="fn">Log</span>()       <span class="cm"># 링크 함수 (기본값 사용 시 생략 가능)</span>
+    )
+)
+result = model.<span class="fn">fit</span>()
+
+<span class="fn">print</span>(result.<span class="fn">summary</span>())
+<span class="fn">print</span>(<span class="st">"Deviance:"</span>,   result.deviance)        <span class="cm"># 이탈도 (낮을수록 좋음)</span>
+<span class="fn">print</span>(<span class="st">"Pearson χ²:"</span>, result.pearson_chi2)    <span class="cm"># 피어슨 카이제곱</span>
+<span class="fn">print</span>(<span class="st">"df residual:"</span>,result.df_resid)         <span class="cm"># 잔차 자유도</span>
+
+<span class="cm"># 분산/자유도 비 (과산포 진단: >1이면 과산포)</span>
+disp = result.deviance / result.df_resid
+<span class="fn">print</span>(<span class="st">f"과산포 비율: {disp:.3f}"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     7. ARIMA / SARIMA
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="arima" data-tags="tsa">
+  <div class="section-hd">
+    <span class="section-num">7</span>
+    <span class="section-title">ARIMA / SARIMA — 시계열 예측</span>
+    <span class="section-sub">p·d·q 파라미터 · auto_arima · 계절성</span>
+  </div>
+
+  <div class="formula-box">
+    ARIMA(p,d,q): φ(B)Δᵈyₜ = θ(B)εₜ &nbsp;|&nbsp;
+    SARIMA(p,d,q)(P,D,Q)ₛ: 계절 주기 s 추가
+  </div>
+
+  <div class="callout gold" style="margin-bottom:16px">
+    <div class="callout-title">🗺️ ARIMA 파라미터 가이드</div>
+    <div class="callout-body">
+      <strong>p (AR)</strong>: PACF 절단 시점 → AR 차수<br>
+      <strong>d (I)</strong>: ADF 검정으로 결정 → 단위근 제거 차분 횟수<br>
+      <strong>q (MA)</strong>: ACF 절단 시점 → MA 차수<br>
+      <strong>P,D,Q,s</strong>: 계절 AR·차분·MA·주기 (월별=12, 분기=4)
+    </div>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">📉 ARIMA / SARIMA 완전 워크플로우</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('arima1')">복사</button></div>
+      <pre id="arima1"><span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">from</span> statsmodels.tsa.arima.model <span class="kw">import</span> ARIMA
+<span class="kw">from</span> statsmodels.tsa.statespace.sarimax <span class="kw">import</span> SARIMAX
+<span class="kw">from</span> statsmodels.tsa <span class="kw">import</span> stattools <span class="kw">as</span> ts
+<span class="kw">from</span> statsmodels.graphics <span class="kw">import</span> tsaplots
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># ── 0. 데이터 로드 ────────────────────────────────────────</span>
+data = sm.datasets.co2.load_pandas().data
+co2  = data[<span class="st">'co2'</span>].ffill().resample(<span class="st">'ME'</span>).mean()
+
+<span class="cm"># ── 1. 정상성 확인 — ADF 검정 ────────────────────────────</span>
+adf_result = ts.<span class="fn">adfuller</span>(co2, autolag=<span class="st">'AIC'</span>)
+<span class="fn">print</span>(<span class="st">f"ADF Stat:  {adf_result[0]:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"p-value:   {adf_result[1]:.4f}"</span>)  <span class="cm"># p > 0.05 → 비정상</span>
+<span class="fn">print</span>(<span class="st">f"Critical:  {adf_result[4]}"</span>)
+
+<span class="cm"># KPSS 검정 (반대 귀무가설: H₀=정상)</span>
+kpss_stat, kpss_p, _, _ = ts.<span class="fn">kpss</span>(co2)
+<span class="fn">print</span>(<span class="st">f"KPSS: stat={kpss_stat:.4f}, p={kpss_p:.4f}"</span>)
+
+<span class="cm"># ── 2. ACF · PACF 시각화 → p, q 결정 ────────────────────</span>
+fig, axes = plt.<span class="fn">subplots</span>(<span class="nb">2</span>, <span class="nb">1</span>, figsize=(<span class="nb">12</span>, <span class="nb">6</span>))
+tsaplots.<span class="fn">plot_acf</span>(co2.diff().dropna(),  lags=<span class="nb">40</span>, ax=axes[<span class="nb">0</span>])
+tsaplots.<span class="fn">plot_pacf</span>(co2.diff().dropna(), lags=<span class="nb">40</span>, ax=axes[<span class="nb">1</span>])
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm"># ── 3. ARIMA 모델 적합 ────────────────────────────────────</span>
+<span class="cm"># order=(p, d, q): AR차수, 차분횟수, MA차수</span>
+model_arima = <span class="fn">ARIMA</span>(co2, order=(<span class="nb">1</span>, <span class="nb">1</span>, <span class="nb">1</span>))
+res_arima   = model_arima.<span class="fn">fit</span>()
+<span class="fn">print</span>(res_arima.<span class="fn">summary</span>())
+
+<span class="cm"># ── 4. SARIMA 모델 (계절성 포함) ─────────────────────────</span>
+<span class="cm"># order=(1,1,1): 비계절 ARIMA</span>
+<span class="cm"># seasonal_order=(1,1,1,12): 계절 AR(1), 1차분, MA(1), 주기=12</span>
+model_sarima = <span class="fn">SARIMAX</span>(
+    co2,
+    order=(<span class="nb">1</span>, <span class="nb">1</span>, <span class="nb">1</span>),
+    seasonal_order=(<span class="nb">1</span>, <span class="nb">1</span>, <span class="nb">1</span>, <span class="nb">12</span>),
+    enforce_stationarity=<span class="kw">False</span>,
+    enforce_invertibility=<span class="kw">False</span>
+)
+res_sarima = model_sarima.<span class="fn">fit</span>(disp=<span class="kw">False</span>)
+<span class="fn">print</span>(res_sarima.<span class="fn">summary</span>())
+
+<span class="cm"># ── 5. 진단 그래프 ────────────────────────────────────────</span>
+res_sarima.<span class="fn">plot_diagnostics</span>(figsize=(<span class="nb">14</span>, <span class="nb">8</span>))
+plt.<span class="fn">show</span>()
+<span class="cm"># 4가지: 표준화잔차, 히스토그램+KDE, Q-Q plot, Ljung-Box 상관도</span>
+
+<span class="cm"># ── 6. 예측 ──────────────────────────────────────────────</span>
+<span class="cm"># 학습 데이터 내 적합값</span>
+fitted = res_sarima.fittedvalues
+
+<span class="cm"># 미래 24개월 예측 (신뢰구간 포함)</span>
+forecast = res_sarima.<span class="fn">get_forecast</span>(steps=<span class="nb">24</span>)
+fc_mean  = forecast.predicted_mean
+fc_ci    = forecast.<span class="fn">conf_int</span>()    <span class="cm"># 95% 신뢰구간 DataFrame</span>
+
+<span class="cm"># ── 7. AIC 기반 자동 파라미터 선택 ───────────────────────</span>
+best_aic = np.inf
+best_params = <span class="kw">None</span>
+<span class="kw">for</span> p <span class="kw">in</span> <span class="fn">range</span>(<span class="nb">0</span>, <span class="nb">3</span>):
+    <span class="kw">for</span> d <span class="kw">in</span> <span class="fn">range</span>(<span class="nb">0</span>, <span class="nb">2</span>):
+        <span class="kw">for</span> q <span class="kw">in</span> <span class="fn">range</span>(<span class="nb">0</span>, <span class="nb">3</span>):
+            <span class="kw">try</span>:
+                m = <span class="fn">ARIMA</span>(co2, order=(p,d,q)).<span class="fn">fit</span>()
+                <span class="kw">if</span> m.aic < best_aic:
+                    best_aic, best_params = m.aic, (p,d,q)
+            <span class="kw">except</span>:
+                <span class="kw">pass</span>
+<span class="fn">print</span>(<span class="st">f"최적 ARIMA: {best_params}  AIC: {best_aic:.2f}"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     8. 정상성 검정
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="stationarity" data-tags="tsa test">
+  <div class="section-hd">
+    <span class="section-num">8</span>
+    <span class="section-title">정상성 검정 & 시계열 진단</span>
+    <span class="section-sub">ADF · KPSS · ACF · PACF · Ljung-Box</span>
+  </div>
+
+  <div class="card-grid-2">
+    <div class="full-card">
+      <div class="full-card-title">📐 ADF & KPSS 정상성 검정</div>
+      <table class="param-table" style="margin-bottom:10px">
+        <thead><tr><th>검정</th><th>H₀</th><th>p &lt; 0.05</th><th>p ≥ 0.05</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">ADF</td><td>단위근 있음 (비정상)</td><td class="param-desc" style="color:var(--green)">정상!</td><td class="param-def">비정상 (차분 필요)</td></tr>
+          <tr><td class="param-name">KPSS</td><td>정상</td><td class="param-desc" style="color:var(--red)">비정상!</td><td class="param-def">정상 유지</td></tr>
+        </tbody>
+      </table>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('stat1')">복사</button></div>
+        <pre id="stat1"><span class="kw">from</span> statsmodels.tsa <span class="kw">import</span> stattools <span class="kw">as</span> ts
+
+<span class="cm"># ── ADF (Augmented Dickey-Fuller) ─────────────────────</span>
+adf = ts.<span class="fn">adfuller</span>(series, autolag=<span class="st">'AIC'</span>)
+<span class="fn">print</span>(<span class="st">f"ADF통계량: {adf[0]:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"p-value:   {adf[1]:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"사용 래그:  {adf[2]}"</span>)
+<span class="fn">print</span>(<span class="st">f"임계값:"</span>, adf[<span class="nb">4</span>])
+<span class="cm"># adf[4] = {'1%': -3.5, '5%': -2.9, '10%': -2.6}</span>
+
+<span class="cm"># ── KPSS ──────────────────────────────────────────────</span>
+kpss = ts.<span class="fn">kpss</span>(series, regression=<span class="st">'c'</span>, nlags=<span class="st">'auto'</span>)
+<span class="fn">print</span>(<span class="st">f"KPSS통계량: {kpss[0]:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"p-value:    {kpss[1]:.4f}"</span>)
+
+<span class="cm"># ── 두 검정 조합 판단 ─────────────────────────────────</span>
+<span class="cm"># ADF p<0.05 + KPSS p>0.05 → 정상 확신</span>
+<span class="cm"># ADF p>0.05 + KPSS p<0.05 → 비정상 확신 → 차분!</span>
+<span class="cm"># 둘 다 같은 결과 → 추세정상/확률보행 가능성 재검토</span>
+
+<span class="cm"># ── 자동 차분 횟수 추정 ───────────────────────────────</span>
+d = ts.<span class="fn">ndiffs</span>(series, alpha=<span class="nb">0.05</span>, test=<span class="st">'adf'</span>)
+D = ts.<span class="fn">nsdiffs</span>(series, m=<span class="nb">12</span>, test=<span class="st">'ocsb'</span>)  <span class="cm"># 계절 차분</span>
+<span class="fn">print</span>(<span class="st">f"권장 차분: d={d}, D={D}"</span>)</pre>
+      </div>
+    </div>
+    <div class="full-card">
+      <div class="full-card-title">〰️ ACF / PACF + Ljung-Box 검정</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('stat2')">복사</button></div>
+        <pre id="stat2"><span class="kw">from</span> statsmodels.tsa <span class="kw">import</span> stattools <span class="kw">as</span> ts
+<span class="kw">from</span> statsmodels.graphics <span class="kw">import</span> tsaplots
+<span class="kw">from</span> statsmodels.stats.diagnostic <span class="kw">import</span> acorr_ljungbox
+
+<span class="cm"># ── ACF / PACF 계산값 ─────────────────────────────────</span>
+acf_vals, ci = ts.<span class="fn">acf</span>(series, nlags=<span class="nb">40</span>, alpha=<span class="nb">0.05</span>)
+pacf_vals    = ts.<span class="fn">pacf</span>(series, nlags=<span class="nb">40</span>)
+
+<span class="cm"># ── ACF / PACF 그래프 (ARIMA p, q 결정) ──────────────</span>
+fig, axes = plt.<span class="fn">subplots</span>(<span class="nb">2</span>, <span class="nb">1</span>, figsize=(<span class="nb">11</span>, <span class="nb">6</span>))
+tsaplots.<span class="fn">plot_acf</span>(series, lags=<span class="nb">40</span>, ax=axes[<span class="nb">0</span>],
+    title=<span class="st">'ACF — q 결정 (절단점이 MA차수)'</span>)
+tsaplots.<span class="fn">plot_pacf</span>(series, lags=<span class="nb">40</span>, ax=axes[<span class="nb">1</span>],
+    title=<span class="st">'PACF — p 결정 (절단점이 AR차수)'</span>)
+plt.<span class="fn">tight_layout</span>()
+
+<span class="cm"># ── Ljung-Box 검정 (잔차 자기상관) ───────────────────</span>
+lb = <span class="fn">acorr_ljungbox</span>(residuals, lags=[<span class="nb">10</span>,<span class="nb">20</span>,<span class="nb">30</span>])
+<span class="fn">print</span>(lb)
+<span class="cm"># p > 0.05 → 자기상관 없음 (모델 적합 OK)</span>
+
+<span class="cm"># ── 시계열 분해 (Seasonal Decomposition) ─────────────</span>
+<span class="kw">from</span> statsmodels.tsa.seasonal <span class="kw">import</span> seasonal_decompose, STL
+
+<span class="cm"># 고전적 분해 (가법/승법)</span>
+decomp = <span class="fn">seasonal_decompose</span>(co2, model=<span class="st">'additive'</span>, period=<span class="nb">12</span>)
+fig = decomp.<span class="fn">plot</span>()  <span class="cm"># trend, seasonal, residual 그래프</span>
+
+<span class="cm"># STL 분해 (더 강건)</span>
+stl = <span class="fn">STL</span>(co2, period=<span class="nb">12</span>, robust=<span class="kw">True</span>)
+stl_result = stl.<span class="fn">fit</span>()
+stl_result.<span class="fn">plot</span>()</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     9. 통계 검정
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="ttest" data-tags="test">
+  <div class="section-hd">
+    <span class="section-num">9</span>
+    <span class="section-title">통계 검정 — t검정 · z검정 · 비율검정</span>
+    <span class="section-sub">단일표본 · 독립표본 · 대응표본 · 비율</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">🔬 모든 t검정 · z검정 코드</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('ttest1')">복사</button></div>
+      <pre id="ttest1"><span class="kw">from</span> statsmodels.stats <span class="kw">import</span> weightstats <span class="kw">as</span> ws
+<span class="kw">from</span> statsmodels.stats.proportion <span class="kw">import</span> (
+    proportions_ztest, proportion_confint, proportions_chisquare
+)
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="cm"># 1. 단일 표본 t검정  H₀: μ = μ₀</span>
+<span class="cm"># ════════════════════════════════════════════════════</span>
+sample = np.<span class="fn">array</span>([<span class="nb">25</span>,<span class="nb">28</span>,<span class="nb">23</span>,<span class="nb">30</span>,<span class="nb">26</span>,<span class="nb">24</span>,<span class="nb">29</span>,<span class="nb">27</span>])
+t_stat, p_val, df = ws.<span class="fn">ttest_mean</span>(sample, value=<span class="nb">25</span>)
+<span class="fn">print</span>(<span class="st">f"t={t_stat:.4f}, p(양측)={p_val:.4f}, df={df:.0f}"</span>)
+
+<span class="cm"># 단측 검정: alternative='larger'/'smaller'</span>
+t, p, _ = ws.<span class="fn">ttest_mean</span>(sample, value=<span class="nb">25</span>, alternative=<span class="st">'larger'</span>)
+
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="cm"># 2. 독립 표본 t검정  H₀: μ₁ = μ₂</span>
+<span class="cm"># ════════════════════════════════════════════════════</span>
+group1 = np.<span class="fn">array</span>([<span class="nb">24</span>,<span class="nb">28</span>,<span class="nb">26</span>,<span class="nb">30</span>,<span class="nb">22</span>])
+group2 = np.<span class="fn">array</span>([<span class="nb">20</span>,<span class="nb">23</span>,<span class="nb">19</span>,<span class="nb">25</span>,<span class="nb">21</span>])
+
+<span class="cm"># 등분산 검정 먼저 (Levene's test)</span>
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> levene
+l_stat, l_p = <span class="fn">levene</span>(group1, group2)
+<span class="fn">print</span>(<span class="st">f"Levene: p={l_p:.4f}"</span>)  <span class="cm"># p > 0.05 → 등분산 가정 OK</span>
+
+<span class="cm"># 독립표본 t검정 (usevar='pooled'=등분산, 'unequal'=Welch)</span>
+cm = ws.<span class="fn">CompareMeans</span>(
+    ws.<span class="fn">DescrStatsW</span>(group1),
+    ws.<span class="fn">DescrStatsW</span>(group2)
+)
+t, p, df = cm.<span class="fn">ttest_ind</span>(usevar=<span class="st">'pooled'</span>)
+<span class="fn">print</span>(<span class="st">f"t={t:.4f}, p={p:.4f}"</span>)
+
+<span class="cm"># 신뢰구간 (차이에 대한)</span>
+ci = cm.<span class="fn">tconfint_diff</span>(alpha=<span class="nb">0.05</span>, usevar=<span class="st">'pooled'</span>)
+<span class="fn">print</span>(<span class="st">f"μ₁-μ₂ 95%CI: {ci}"</span>)
+
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="cm"># 3. 대응 표본 t검정  H₀: μ_before = μ_after</span>
+<span class="cm"># ════════════════════════════════════════════════════</span>
+before = np.<span class="fn">array</span>([<span class="nb">80</span>,<span class="nb">75</span>,<span class="nb">85</span>,<span class="nb">70</span>,<span class="nb">90</span>])
+after  = np.<span class="fn">array</span>([<span class="nb">85</span>,<span class="nb">80</span>,<span class="nb">88</span>,<span class="nb">78</span>,<span class="nb">92</span>])
+d      = ws.<span class="fn">DescrStatsW</span>(before - after)
+t, p, df = d.<span class="fn">ttest_mean</span>(<span class="nb">0</span>)
+<span class="fn">print</span>(<span class="st">f"대응 t={t:.4f}, p={p:.4f}"</span>)
+
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="cm"># 4. 비율 z검정  H₀: p = p₀</span>
+<span class="cm"># ════════════════════════════════════════════════════</span>
+count, nobs, p0 = <span class="nb">48</span>, <span class="nb">100</span>, <span class="nb">0.5</span>   <span class="cm"># 100명 중 48명 성공</span>
+z, p = <span class="fn">proportions_ztest</span>(count, nobs, value=p0, alternative=<span class="st">'two-sided'</span>)
+<span class="fn">print</span>(<span class="st">f"z={z:.4f}, p={p:.4f}"</span>)
+ci_p = <span class="fn">proportion_confint</span>(count, nobs, alpha=<span class="nb">0.05</span>, method=<span class="st">'wilson'</span>)
+<span class="fn">print</span>(<span class="st">f"비율 95% CI: {ci_p}"</span>)
+
+<span class="cm"># 두 비율 차이 검정  H₀: p₁ = p₂</span>
+counts = np.<span class="fn">array</span>([<span class="nb">50</span>, <span class="nb">40</span>])
+nobs2  = np.<span class="fn">array</span>([<span class="nb">100</span>, <span class="nb">90</span>])
+z2, p2 = <span class="fn">proportions_ztest</span>(counts, nobs2)
+<span class="fn">print</span>(<span class="st">f"두 비율 검정: z={z2:.4f}, p={p2:.4f}"</span>)
+
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="cm"># 5. 다중 검정 보정 (Multiple Testing)</span>
+<span class="cm"># ════════════════════════════════════════════════════</span>
+<span class="kw">from</span> statsmodels.stats.multicomp <span class="kw">import</span> multipletests
+p_values = [<span class="nb">0.01</span>, <span class="nb">0.04</span>, <span class="nb">0.06</span>, <span class="nb">0.80</span>, <span class="nb">0.03</span>]
+reject, p_adj, _, _ = <span class="fn">multipletests</span>(
+    p_values,
+    alpha=<span class="nb">0.05</span>,
+    method=<span class="st">'fdr_bh'</span>  <span class="cm"># Benjamini-Hochberg (권장)</span>
+    <span class="cm"># method='bonferroni' → 보수적</span>
+    <span class="cm"># method='holm'       → 순차 Bonferroni</span>
+)
+<span class="fn">print</span>(<span class="st">"기각 여부:"</span>, reject)
+<span class="fn">print</span>(<span class="st">"보정된 p-value:"</span>, p_adj)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ANOVA -->
+<div class="section" id="anova" data-tags="test">
+  <div class="section-hd">
+    <span class="section-num">10</span>
+    <span class="section-title">ANOVA — 분산 분석</span>
+    <span class="section-sub">일원·이원·반복측정 ANOVA · 사후검정</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">📋 ANOVA 완전 가이드</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('anova1')">복사</button></div>
+      <pre id="anova1"><span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf
+<span class="kw">from</span> statsmodels.stats.anova <span class="kw">import</span> anova_lm
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ── 1. 일원 ANOVA ─────────────────────────────────────────</span>
+<span class="cm"># H₀: 그룹 간 평균이 모두 같다</span>
+df = pd.<span class="fn">DataFrame</span>({
+    <span class="st">'value'</span>: [<span class="nb">23</span>,<span class="nb">25</span>,<span class="nb">22</span>, <span class="nb">28</span>,<span class="nb">30</span>,<span class="nb">27</span>, <span class="nb">20</span>,<span class="nb">18</span>,<span class="nb">21</span>],
+    <span class="st">'group'</span>: [<span class="st">'A'</span>]*<span class="nb">3</span> + [<span class="st">'B'</span>]*<span class="nb">3</span> + [<span class="st">'C'</span>]*<span class="nb">3</span>
+})
+model1 = smf.<span class="fn">ols</span>(<span class="st">'value ~ C(group)'</span>, data=df).<span class="fn">fit</span>()
+anova1  = <span class="fn">anova_lm</span>(model1, typ=<span class="nb">1</span>)  <span class="cm"># Type I SS (순차)</span>
+anova1  = <span class="fn">anova_lm</span>(model1, typ=<span class="nb">3</span>)  <span class="cm"># Type III SS (편차, 권장)</span>
+<span class="fn">print</span>(anova1)
+
+<span class="cm"># ── 2. 이원 ANOVA ─────────────────────────────────────────</span>
+df2 = pd.<span class="fn">DataFrame</span>({
+    <span class="st">'score'</span>:  [<span class="nb">85</span>,<span class="nb">88</span>,<span class="nb">82</span>, <span class="nb">75</span>,<span class="nb">78</span>,<span class="nb">72</span>, <span class="nb">90</span>,<span class="nb">92</span>,<span class="nb">88</span>],
+    <span class="st">'method'</span>: [<span class="st">'A'</span>]*<span class="nb">3</span> + [<span class="st">'A'</span>]*<span class="nb">3</span> + [<span class="st">'B'</span>]*<span class="nb">3</span>,
+    <span class="st">'level'</span>:  [<span class="st">'L'</span>,<span class="st">'M'</span>,<span class="st">'H'</span>]*<span class="nb">3</span>
+})
+model2 = smf.<span class="fn">ols</span>(
+    <span class="st">'score ~ C(method) + C(level) + C(method):C(level)'</span>,
+    data=df2
+).<span class="fn">fit</span>()
+<span class="fn">print</span>(<span class="fn">anova_lm</span>(model2, typ=<span class="nb">3</span>))
+
+<span class="cm"># ── 3. 사후검정 (Post-hoc) ────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.stats.multicomp <span class="kw">import</span> pairwise_tukeyhsd, MultiComparison
+
+<span class="cm"># Tukey HSD (가장 많이 사용)</span>
+tukey = <span class="fn">pairwise_tukeyhsd</span>(
+    endog=df[<span class="st">'value'</span>],
+    groups=df[<span class="st">'group'</span>],
+    alpha=<span class="nb">0.05</span>
+)
+<span class="fn">print</span>(tukey.summary())
+tukey.<span class="fn">plot_simultaneous</span>()   <span class="cm"># 신뢰구간 그래프</span>
+
+<span class="cm"># Bonferroni 보정</span>
+mc = <span class="fn">MultiComparison</span>(df[<span class="st">'value'</span>], df[<span class="st">'group'</span>])
+bon_result = mc.<span class="fn">allpairtest</span>(scipy.stats.ttest_ind, method=<span class="st">'bonf'</span>)
+<span class="fn">print</span>(bon_result[<span class="nb">0</span>])
+
+<span class="cm"># ── 4. ANCOVA (공분산 분석) ───────────────────────────────</span>
+<span class="cm"># 공변량(covariate) 통제 후 집단 간 차이 검정</span>
+ancova = smf.<span class="fn">ols</span>(<span class="st">'score ~ C(group) + covariate'</span>, data=df).<span class="fn">fit</span>()
+<span class="fn">print</span>(<span class="fn">anova_lm</span>(ancova, typ=<span class="nb">3</span>))</pre>
+    </div>
+  </div>
+</div>
+
+<!-- 정규성 검정 -->
+<div class="section" id="normality" data-tags="test">
+  <div class="section-hd">
+    <span class="section-num">11</span>
+    <span class="section-title">정규성 검정 & 이분산 검정</span>
+    <span class="section-sub">Shapiro-Wilk · Jarque-Bera · KS · Breusch-Pagan</span>
+  </div>
+
+  <div class="card-grid-2">
+    <div class="full-card">
+      <div class="full-card-title">🔔 정규성 검정 총정리</div>
+      <table class="param-table" style="margin-bottom:10px">
+        <thead><tr><th>검정명</th><th>H₀</th><th>권장 n</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">Shapiro-Wilk</td><td>정규분포 따름</td><td class="param-def">n &lt; 5,000</td><td class="param-desc">가장 강력, 소표본 추천</td></tr>
+          <tr><td class="param-name">Jarque-Bera</td><td>정규분포 따름</td><td class="param-def">n &gt; 2,000</td><td class="param-desc">왜도+첨도 기반, 대표본</td></tr>
+          <tr><td class="param-name">KS Test</td><td>특정 분포 따름</td><td class="param-def">모두</td><td class="param-desc">임의 분포 비교 가능</td></tr>
+          <tr><td class="param-name">Omnibus</td><td>정규분포 따름</td><td class="param-def">n &gt; 20</td><td class="param-desc">statsmodels 내장</td></tr>
+          <tr><td class="param-name">Anderson-Darling</td><td>정규분포 따름</td><td class="param-def">모두</td><td class="param-desc">꼬리 민감, 강력</td></tr>
+        </tbody>
+      </table>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('norm1')">복사</button></div>
+        <pre id="norm1"><span class="kw">from</span> scipy.stats <span class="kw">import</span> shapiro, kstest, anderson
+<span class="kw">from</span> statsmodels.stats.stattools <span class="kw">import</span> jarque_bera, omni_normtest
+
+data = resid  <span class="cm"># OLS 잔차 또는 데이터</span>
+
+<span class="cm"># Shapiro-Wilk (소표본 추천)</span>
+stat, p = <span class="fn">shapiro</span>(data)
+<span class="fn">print</span>(<span class="st">f"Shapiro: W={stat:.4f}, p={p:.4f}"</span>)
+
+<span class="cm"># Jarque-Bera (대표본)</span>
+jb_stat, jb_p, skew, kurtosis = <span class="fn">jarque_bera</span>(data)
+<span class="fn">print</span>(<span class="st">f"JB: stat={jb_stat:.4f}, p={jb_p:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"  왜도={skew:.4f}, 초과첨도={kurtosis:.4f}"</span>)
+
+<span class="cm"># Omnibus (statsmodels)</span>
+om_stat, om_p = <span class="fn">omni_normtest</span>(data)
+<span class="fn">print</span>(<span class="st">f"Omnibus: χ²={om_stat:.4f}, p={om_p:.4f}"</span>)
+
+<span class="cm"># Anderson-Darling</span>
+ad = <span class="fn">anderson</span>(data, dist=<span class="st">'norm'</span>)
+<span class="fn">print</span>(<span class="st">f"Anderson: statistic={ad.statistic:.4f}"</span>)
+<span class="kw">for</span> sl, cv <span class="kw">in</span> <span class="fn">zip</span>(ad.significance_level, ad.critical_values):
+    <span class="fn">print</span>(<span class="st">f"  {sl}% 임계값: {cv:.4f}"</span>)</pre>
+      </div>
+    </div>
+    <div class="full-card">
+      <div class="full-card-title">📊 이분산 검정 총정리</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('het1')">복사</button></div>
+        <pre id="het1"><span class="kw">from</span> statsmodels.stats.diagnostic <span class="kw">import</span> (
+    het_breuschpagan,  <span class="cm"># Breusch-Pagan</span>
+    het_white,         <span class="cm"># White 검정</span>
+    het_goldfeldquandt <span class="cm"># Goldfeld-Quandt</span>
+)
+
+resid = result.resid
+exog  = result.model.exog
+
+<span class="cm"># ── Breusch-Pagan 검정 ────────────────────────────────</span>
+<span class="cm"># H₀: 잔차 분산이 일정 (등분산)</span>
+lm, lm_p, f, f_p = <span class="fn">het_breuschpagan</span>(resid, exog)
+<span class="fn">print</span>(<span class="st">f"BP: LM={lm:.4f}, p={lm_p:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"   F={f:.4f},  F_p={f_p:.4f}"</span>)
+<span class="cm"># p < 0.05 → 이분산 존재 → WLS/GLS 고려</span>
+
+<span class="cm"># ── White 검정 (일반적) ───────────────────────────────</span>
+lm2, lm2_p, f2, f2_p = <span class="fn">het_white</span>(resid, exog)
+<span class="fn">print</span>(<span class="st">f"White: LM={lm2:.4f}, p={lm2_p:.4f}"</span>)
+
+<span class="cm"># ── Goldfeld-Quandt (단조 이분산) ─────────────────────</span>
+f3, p3, order = <span class="fn">het_goldfeldquandt</span>(resid, exog, idx=<span class="nb">1</span>)
+<span class="fn">print</span>(<span class="st">f"GQ: F={f3:.4f}, p={p3:.4f}"</span>)
+
+<span class="cm"># ── Levene·Bartlett (두 그룹 등분산) ─────────────────</span>
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> levene, bartlett
+l_stat, l_p = <span class="fn">levene</span>(group1, group2)        <span class="cm"># 비정규에 강건</span>
+b_stat, b_p = <span class="fn">bartlett</span>(group1, group2)      <span class="cm"># 정규 가정 필요</span>
+<span class="fn">print</span>(<span class="st">f"Levene: p={l_p:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Bartlett: p={b_p:.4f}"</span>)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     비모수 검정
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="nonparam" data-tags="test">
+  <div class="section-hd">
+    <span class="section-num">12</span>
+    <span class="section-title">비모수 검정</span>
+    <span class="section-sub">Mann-Whitney · Wilcoxon · Kruskal-Wallis · 카이제곱</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">📦 비모수 검정 완전 정리</div>
+    <div class="callout blue" style="margin-bottom:12px">
+      <div class="callout-title">비모수 검정 적용 시점</div>
+      <div class="callout-body">
+        정규성 가정 위반 / 소표본(n &lt; 30) / 순서형 데이터 / 이상치 많음 / 모수 분포 불명확
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('nonp1')">복사</button></div>
+      <pre id="nonp1"><span class="kw">from</span> scipy.stats <span class="kw">import</span> (
+    mannwhitneyu,   <span class="cm"># 독립 2표본 비모수 (t검정 대체)</span>
+    wilcoxon,       <span class="cm"># 대응 표본 비모수 (paired t 대체)</span>
+    kruskal,        <span class="cm"># K개 그룹 비모수 (일원ANOVA 대체)</span>
+    chi2_contingency, chisquare,  <span class="cm"># 카이제곱 검정</span>
+    spearmanr, kendalltau         <span class="cm"># 상관계수 비모수</span>
+)
+<span class="kw">from</span> statsmodels.stats.contingency_tables <span class="kw">import</span> mcnemar
+
+<span class="cm"># ── 1. Mann-Whitney U 검정 (독립 2표본) ──────────────</span>
+<span class="cm"># H₀: 두 그룹의 중앙값이 같다</span>
+u_stat, p = <span class="fn">mannwhitneyu</span>(group1, group2, alternative=<span class="st">'two-sided'</span>)
+<span class="fn">print</span>(<span class="st">f"Mann-Whitney U: U={u_stat:.1f}, p={p:.4f}"</span>)
+
+<span class="cm"># ── 2. Wilcoxon 부호순위 검정 (대응 표본) ────────────</span>
+<span class="cm"># H₀: 차이 중앙값 = 0</span>
+w_stat, p = <span class="fn">wilcoxon</span>(before - after, alternative=<span class="st">'two-sided'</span>)
+<span class="fn">print</span>(<span class="st">f"Wilcoxon: W={w_stat:.1f}, p={p:.4f}"</span>)
+
+<span class="cm"># ── 3. Kruskal-Wallis (3개+ 그룹) ────────────────────</span>
+<span class="cm"># H₀: K개 그룹의 분포가 같다</span>
+h_stat, p = <span class="fn">kruskal</span>(group1, group2, group3)
+<span class="fn">print</span>(<span class="st">f"Kruskal-Wallis: H={h_stat:.4f}, p={p:.4f}"</span>)
+
+<span class="cm"># ── 4. 카이제곱 검정 (범주형) ─────────────────────────</span>
+<span class="cm"># 교차표 독립성 검정</span>
+observed = [[<span class="nb">50</span>,<span class="nb">30</span>],[<span class="nb">20</span>,<span class="nb">40</span>]]   <span class="cm"># 관측 빈도</span>
+chi2, p, dof, expected = <span class="fn">chi2_contingency</span>(observed)
+<span class="fn">print</span>(<span class="st">f"χ²={chi2:.4f}, p={p:.4f}, df={dof}"</span>)
+
+<span class="cm"># 적합도 검정</span>
+observed_f = [<span class="nb">10</span>,<span class="nb">20</span>,<span class="nb">15</span>,<span class="nb">25</span>]
+expected_f = [<span class="nb">17.5</span>,<span class="nb">17.5</span>,<span class="nb">17.5</span>,<span class="nb">17.5</span>]  <span class="cm"># 기대 빈도 (균등)</span>
+chi2, p = <span class="fn">chisquare</span>(observed_f, f_exp=expected_f)
+<span class="fn">print</span>(<span class="st">f"적합도 χ²={chi2:.4f}, p={p:.4f}"</span>)
+
+<span class="cm"># ── 5. McNemar 검정 (대응 이진 데이터) ───────────────</span>
+<span class="cm"># 전/후 처리에서 이진 결과 변화 검정</span>
+table = [[<span class="nb">40</span>,<span class="nb">10</span>],[<span class="nb">5</span>,<span class="nb">45</span>]]   <span class="cm"># [[TT, TF],[FT, FF]]</span>
+mn = <span class="fn">mcnemar</span>(table, exact=<span class="kw">False</span>, correction=<span class="kw">True</span>)
+<span class="fn">print</span>(<span class="st">f"McNemar: χ²={mn.statistic:.4f}, p={mn.pvalue:.4f}"</span>)
+
+<span class="cm"># ── 6. 비모수 상관 ────────────────────────────────────</span>
+<span class="cm"># Spearman (순위 상관)</span>
+sp_r, sp_p = <span class="fn">spearmanr</span>(x, y)
+<span class="cm"># Kendall Tau (순서 관계)</span>
+kt_tau, kt_p = <span class="fn">kendalltau</span>(x, y)
+<span class="fn">print</span>(<span class="st">f"Spearman: r={sp_r:.4f}, p={sp_p:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Kendall:  τ={kt_tau:.4f}, p={kt_p:.4f}"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     VAR
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="var" data-tags="tsa">
+  <div class="section-hd">
+    <span class="section-num">13</span>
+    <span class="section-title">VAR — 벡터 자기회귀 모델</span>
+    <span class="section-sub">다변량 시계열 · Granger 인과 · IRF · FEVD</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">🔗 VAR 완전 워크플로우</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('var1')">복사</button></div>
+      <pre id="var1"><span class="kw">from</span> statsmodels.tsa.vector_ar.var_model <span class="kw">import</span> VAR
+<span class="kw">from</span> statsmodels.tsa.stattools <span class="kw">import</span> grangercausalitytests
+
+<span class="cm"># ── 데이터 준비 (여러 정상 시계열) ───────────────────────</span>
+data = sm.datasets.macrodata.load_pandas().data
+mdata = data[[<span class="st">'realgdp'</span>,<span class="st">'realcons'</span>,<span class="st">'realinv'</span>]]
+<span class="cm"># 차분으로 정상화 (ADF 검정 후)</span>
+mdata_diff = mdata.diff().dropna()
+
+<span class="cm"># ── VAR 래그 차수 선택 ───────────────────────────────────</span>
+model = <span class="fn">VAR</span>(mdata_diff)
+lag_order = model.<span class="fn">select_order</span>(maxlags=<span class="nb">15</span>)
+<span class="fn">print</span>(lag_order.<span class="fn">summary</span>())  <span class="cm"># AIC/BIC/FPE/HQIC 기준 최적 래그</span>
+
+p_opt = lag_order.aic       <span class="cm"># AIC 최적 래그</span>
+
+<span class="cm"># ── VAR(p) 적합 ──────────────────────────────────────────</span>
+result = model.<span class="fn">fit</span>(maxlags=p_opt, ic=<span class="st">'aic'</span>)
+<span class="fn">print</span>(result.<span class="fn">summary</span>())
+
+<span class="cm"># ── 잔차 진단 ────────────────────────────────────────────</span>
+result.<span class="fn">test_whiteness</span>()        <span class="cm"># 잔차 자기상관 검정</span>
+result.<span class="fn">test_normality</span>()        <span class="cm"># 잔차 정규성 검정</span>
+result.<span class="fn">test_inst_causality</span>(<span class="nb">0</span>) <span class="cm"># 순간 인과성</span>
+
+<span class="cm"># ── Granger 인과 검정 ─────────────────────────────────</span>
+<span class="cm"># H₀: x가 y를 Granger-cause 하지 않는다</span>
+gc = <span class="fn">grangercausalitytests</span>(
+    mdata_diff[[<span class="st">'realgdp'</span>,<span class="st">'realcons'</span>]],  <span class="cm"># 두 번째 열이 원인</span>
+    maxlag=<span class="nb">4</span>,
+    verbose=<span class="kw">True</span>
+)
+
+<span class="cm"># ── 예측 ──────────────────────────────────────────────────</span>
+lag_data = mdata_diff.values[-result.k_ar:]  <span class="cm"># 마지막 p개 행</span>
+forecast = result.<span class="fn">forecast</span>(lag_data, steps=<span class="nb">5</span>)
+
+<span class="cm"># 예측 신뢰구간 포함</span>
+fc, lo, hi = result.<span class="fn">forecast_interval</span>(lag_data, steps=<span class="nb">5</span>, alpha=<span class="nb">0.05</span>)
+
+<span class="cm"># ── 충격반응함수 (IRF) ────────────────────────────────────</span>
+irf = result.<span class="fn">irf</span>(periods=<span class="nb">20</span>)
+irf.<span class="fn">plot</span>(orth=<span class="kw">False</span>)   <span class="cm"># 비직교화 IRF</span>
+irf.<span class="fn">plot</span>(orth=<span class="kw">True</span>)    <span class="cm"># 직교화 IRF (Cholesky)</span>
+
+<span class="cm"># ── 예측오차 분산분해 (FEVD) ──────────────────────────────</span>
+fevd = result.<span class="fn">fevd</span>(periods=<span class="nb">20</span>)
+fevd.<span class="fn">plot</span>()  <span class="cm"># 각 변수가 예측오차에 기여하는 분산 비중</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     Holt-Winters
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="smoothing" data-tags="tsa">
+  <div class="section-hd">
+    <span class="section-num">14</span>
+    <span class="section-title">지수 평활 — Holt-Winters</span>
+    <span class="section-sub">단순·이중·삼중 지수 평활 · 계절성 예측</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">〰️ 지수 평활 완전 가이드</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('hw1')">복사</button></div>
+      <pre id="hw1"><span class="kw">from</span> statsmodels.tsa.holtwinters <span class="kw">import</span> (
+    SimpleExpSmoothing,    <span class="cm"># 단순 지수 평활</span>
+    Holt,                  <span class="cm"># Holt's (추세 포함)</span>
+    ExponentialSmoothing   <span class="cm"># Holt-Winters (추세+계절)</span>
+)
+
+co2 = sm.datasets.co2.load_pandas().data[<span class="st">'co2'</span>].ffill()
+
+<span class="cm"># ── 1. 단순 지수 평활 (수준만) ───────────────────────────</span>
+ses = <span class="fn">SimpleExpSmoothing</span>(co2, initialization_method=<span class="st">'estimated'</span>)
+ses_result = ses.<span class="fn">fit</span>(optimized=<span class="kw">True</span>)
+<span class="fn">print</span>(<span class="st">f"α (평활 파라미터): {ses_result.params['smoothing_level']:.4f}"</span>)
+
+<span class="cm"># ── 2. Holt's (수준 + 추세) ──────────────────────────────</span>
+holt = <span class="fn">Holt</span>(co2, initialization_method=<span class="st">'estimated'</span>)
+holt_result = holt.<span class="fn">fit</span>(optimized=<span class="kw">True</span>, exponential=<span class="kw">False</span>)
+
+<span class="cm"># ── 3. Holt-Winters (수준 + 추세 + 계절성) ───────────────</span>
+hw = <span class="fn">ExponentialSmoothing</span>(
+    co2,
+    trend=<span class="st">'add'</span>,       <span class="cm"># 추세: 'add'(가법) / 'mul'(승법) / None</span>
+    seasonal=<span class="st">'add'</span>,    <span class="cm"># 계절: 'add' / 'mul' / None</span>
+    seasonal_periods=<span class="nb">12</span>, <span class="cm"># 계절 주기 (월별=12)</span>
+    initialization_method=<span class="st">'estimated'</span>
+)
+hw_result = hw.<span class="fn">fit</span>(
+    optimized=<span class="kw">True</span>,      <span class="cm"># α,β,γ 자동 최적화</span>
+    use_brute=<span class="kw">True</span>       <span class="cm"># 전역 최적화 (권장)</span>
+)
+<span class="fn">print</span>(hw_result.<span class="fn">summary</span>())
+
+<span class="cm"># 파라미터 확인</span>
+<span class="fn">print</span>(<span class="st">f"α (수준): {hw_result.params['smoothing_level']:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"β (추세): {hw_result.params['smoothing_trend']:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"γ (계절): {hw_result.params['smoothing_seasonal']:.4f}"</span>)
+
+<span class="cm"># ── 예측 ──────────────────────────────────────────────────</span>
+forecast_12 = hw_result.<span class="fn">forecast</span>(<span class="nb">12</span>)   <span class="cm"># 12개월 예측</span>
+<span class="fn">print</span>(forecast_12)
+
+<span class="cm"># ── 모델 비교 (AIC 기준) ──────────────────────────────────</span>
+results = {}
+<span class="kw">for</span> trend <span class="kw">in</span> [<span class="kw">None</span>, <span class="st">'add'</span>, <span class="st">'mul'</span>]:
+    <span class="kw">for</span> seasonal <span class="kw">in</span> [<span class="kw">None</span>, <span class="st">'add'</span>, <span class="st">'mul'</span>]:
+        <span class="kw">try</span>:
+            m = <span class="fn">ExponentialSmoothing</span>(
+                co2, trend=trend, seasonal=seasonal,
+                seasonal_periods=<span class="nb">12</span>
+            ).<span class="fn">fit</span>(optimized=<span class="kw">True</span>)
+            results[(trend,seasonal)] = m.aic
+        <span class="kw">except</span>: <span class="kw">pass</span>
+best = <span class="fn">min</span>(results, key=results.get)
+<span class="fn">print</span>(<span class="st">f"최적: trend={best[0]}, seasonal={best[1]}"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     RLM
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="rlm" data-tags="linear">
+  <div class="section-hd">
+    <span class="section-num">15</span>
+    <span class="section-title">RLM & 분위 회귀 — 이상치 강건 회귀</span>
+    <span class="section-sub">Robust LM · Quantile Regression</span>
+  </div>
+
+  <div class="card-grid-2">
+    <div class="full-card">
+      <div class="full-card-title">🛡️ RLM (Robust Linear Model)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('rlm1')">복사</button></div>
+        <pre id="rlm1"><span class="cm"># RLM: 이상치에 강건한 회귀</span>
+<span class="cm"># M-추정법: 이상치에 낮은 가중치 자동 부여</span>
+
+model_rlm = sm.<span class="fn">RLM</span>(
+    y, X,
+    M=sm.robust.norms.<span class="fn">HuberT</span>()  <span class="cm"># Huber's T (기본)</span>
+    <span class="cm"># M=sm.robust.norms.BiSquare() → Tukey Bisquare</span>
+    <span class="cm"># M=sm.robust.norms.TrimmedMean() → Trimmed Mean</span>
+)
+result_rlm = model_rlm.<span class="fn">fit</span>()
+<span class="fn">print</span>(result_rlm.<span class="fn">summary</span>())
+
+<span class="cm"># 이상치 가중치 확인</span>
+weights = result_rlm.weights
+<span class="cm"># weights < 1 → 이상치로 다운가중</span>
+outliers = np.<span class="fn">where</span>(weights < <span class="nb">0.5</span>)[<span class="nb">0</span>]
+<span class="fn">print</span>(<span class="st">f"이상치 인덱스: {outliers}"</span>)</pre>
+      </div>
+    </div>
+    <div class="full-card">
+      <div class="full-card-title">📊 분위 회귀 (Quantile Regression)</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('qr1')">복사</button></div>
+        <pre id="qr1"><span class="cm"># 분위 회귀: E(y|x) 대신 Q_τ(y|x) 추정</span>
+<span class="cm"># 다양한 분위에서 회귀선 → 분포 전체 파악</span>
+
+data = sm.datasets.engel.load_pandas().data
+
+<span class="cm"># 여러 분위에서 동시 추정</span>
+quantiles = [<span class="nb">0.1</span>, <span class="nb">0.25</span>, <span class="nb">0.5</span>, <span class="nb">0.75</span>, <span class="nb">0.9</span>]
+results_qr = {}
+<span class="kw">for</span> q <span class="kw">in</span> quantiles:
+    res = smf.<span class="fn">quantreg</span>(<span class="st">'foodexp ~ income'</span>, data).<span class="fn">fit</span>(q=q)
+    results_qr[q] = res
+    <span class="fn">print</span>(<span class="st">f"τ={q}: income 계수={res.params['income']:.4f}"</span>)
+
+<span class="cm"># τ=0.5가 중앙값 회귀 (OLS 대안)</span>
+<span class="cm"># 다른 τ 값으로 소득-식비 관계가 달라짐 → 분포 불균질 확인</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     혼합 효과 & 생존
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="mixedlm" data-tags="linear">
+  <div class="section-hd">
+    <span class="section-num">16</span>
+    <span class="section-title">혼합 효과 모델 & 생존 분석</span>
+    <span class="section-sub">MixedLM · Cox PH · Kaplan-Meier</span>
+  </div>
+
+  <div class="card-grid-2">
+    <div class="full-card">
+      <div class="full-card-title">🏗️ MixedLM — 선형 혼합 효과</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('lme1')">복사</button></div>
+        <pre id="lme1"><span class="cm"># 혼합 효과: 고정효과(집단 수준) + 랜덤효과(개체 수준)</span>
+<span class="cm"># 패널 데이터, 반복 측정, 집단 구조 데이터에 사용</span>
+
+data = sm.datasets.grunfeld.load_pandas().data
+
+<span class="cm"># MixedLM: invest ~ value, 기업별 랜덤 절편</span>
+model_lme = smf.<span class="fn">mixedlm</span>(
+    <span class="st">'invest ~ value + capital'</span>,
+    data=data,
+    groups=data[<span class="st">'firm'</span>],        <span class="cm"># 랜덤 효과 그룹화 변수</span>
+    <span class="cm"># exog_re=data[['value']]  → 랜덤 기울기 추가</span>
+)
+res_lme = model_lme.<span class="fn">fit</span>(reml=<span class="kw">True</span>)  <span class="cm"># REML 추정 (기본)</span>
+<span class="fn">print</span>(res_lme.<span class="fn">summary</span>())
+
+<span class="cm"># 랜덤 효과 추출</span>
+re = res_lme.random_effects   <span class="cm"># 기업별 랜덤 절편</span></pre>
+      </div>
+    </div>
+    <div class="full-card" id="survival">
+      <div class="full-card-title">❤️ 생존 분석 — Cox PH & Kaplan-Meier</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('surv1')">복사</button></div>
+        <pre id="surv1"><span class="kw">from</span> statsmodels.duration.hazard_regression <span class="kw">import</span> PHReg
+<span class="kw">from</span> statsmodels.duration.survfunc <span class="kw">import</span> SurvfuncRight
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ── Kaplan-Meier 생존 곡선 ─────────────────────────</span>
+time    = np.<span class="fn">array</span>([<span class="nb">5</span>,<span class="nb">10</span>,<span class="nb">12</span>,<span class="nb">20</span>,<span class="nb">25</span>,<span class="nb">30</span>,<span class="nb">40</span>,<span class="nb">45</span>,<span class="nb">50</span>,<span class="nb">60</span>])
+status  = np.<span class="fn">array</span>([<span class="nb">1</span>,<span class="nb">1</span>,<span class="nb">0</span>,<span class="nb">1</span>,<span class="nb">1</span>,<span class="nb">0</span>,<span class="nb">1</span>,<span class="nb">0</span>,<span class="nb">1</span>,<span class="nb">1</span>])  <span class="cm"># 1=사건, 0=중도절단</span>
+
+km = <span class="fn">SurvfuncRight</span>(time, status)
+km.<span class="fn">plot</span>()   <span class="cm"># 생존 곡선</span>
+<span class="fn">print</span>(<span class="st">"중앙 생존 시간:"</span>, km.quantile(<span class="nb">0.5</span>))
+
+<span class="cm"># ── Cox 비례 위험 모델 ─────────────────────────────</span>
+covariates = np.<span class="fn">column_stack</span>([age, treatment])
+cox = <span class="fn">PHReg</span>(
+    endog=time,
+    exog=covariates,
+    status=status
+)
+res_cox = cox.<span class="fn">fit</span>()
+<span class="fn">print</span>(res_cox.<span class="fn">summary</span>())
+
+<span class="cm"># 위험비 (Hazard Ratio) = exp(coefficient)</span>
+hr = np.<span class="fn">exp</span>(res_cox.params)
+<span class="fn">print</span>(<span class="st">"위험비:"</span>, hr)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DIAGNOSTICS
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="diagnostics" data-tags="linear test">
+  <div class="section-hd">
+    <span class="section-num">17</span>
+    <span class="section-title">모델 진단 & 시각화 총정리</span>
+    <span class="section-sub">잔차 분석 · 영향점 · 그래픽스</span>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">🔎 statsmodels 내장 진단 그래픽스</div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('diag1')">복사</button></div>
+      <pre id="diag1"><span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">from</span> statsmodels.graphics.regressionplots <span class="kw">import</span> (
+    plot_fit,          <span class="cm"># 적합선 + 신뢰구간</span>
+    plot_regress_exog, <span class="cm"># 특정 변수 편회귀 그래프</span>
+    plot_partregress,  <span class="cm"># 편잔차 플롯</span>
+    plot_ccpr,         <span class="cm"># CCPR (성분+잔차) 플롯</span>
+    influence_plot,    <span class="cm"># 영향점 버블 차트</span>
+)
+<span class="kw">from</span> statsmodels.graphics.gofplots <span class="kw">import</span> qqplot
+
+result = smf.<span class="fn">ols</span>(<span class="st">'TOTEMP ~ GNP + UNEMP'</span>, data=data).<span class="fn">fit</span>()
+
+<span class="cm"># ── 1. 회귀 진단 4-패널 플롯 ──────────────────────────</span>
+fig = plt.<span class="fn">figure</span>(figsize=(<span class="nb">12</span>,<span class="nb">10</span>))
+sm.<span class="fn">graphics</span>.<span class="fn">plot_regress_exog</span>(result, <span class="st">'GNP'</span>, fig=fig)
+
+<span class="cm"># ── 2. 적합 값 시각화 ─────────────────────────────────</span>
+<span class="fn">plot_fit</span>(result, <span class="st">'GNP'</span>)      <span class="cm"># GNP vs 적합값+신뢰구간</span>
+<span class="fn">plot_regress_exog</span>(result, <span class="st">'GNP'</span>)   <span class="cm"># 4개 서브플롯</span>
+
+<span class="cm"># ── 3. 편회귀 플롯 (added variable plot) ─────────────</span>
+fig2, ax2 = plt.<span class="fn">subplots</span>(figsize=(<span class="nb">7</span>,<span class="nb">5</span>))
+<span class="fn">plot_partregress</span>(<span class="st">'TOTEMP'</span>, <span class="st">'GNP'</span>,
+    exog_others=[<span class="st">'UNEMP'</span>,<span class="st">'const'</span>],
+    data=data, ax=ax2)
+
+<span class="cm"># ── 4. Q-Q 플롯 ───────────────────────────────────────</span>
+qqplot = <span class="fn">qqplot</span>(result.resid, line=<span class="st">'45'</span>)  <span class="cm"># 잔차 정규성</span>
+
+<span class="cm"># ── 5. 영향점 플롯 (Cook's D + Leverage) ─────────────</span>
+<span class="fn">influence_plot</span>(result, criterion=<span class="st">'cooks'</span>)
+<span class="cm"># 버블 크기=Cook's D, x=레버리지, y=스튜던트화 잔차</span>
+
+<span class="cm"># ── 6. ACF/PACF ───────────────────────────────────────</span>
+<span class="kw">from</span> statsmodels.graphics.tsaplots <span class="kw">import</span> plot_acf, plot_pacf
+fig3, axes3 = plt.<span class="fn">subplots</span>(<span class="nb">2</span>, <span class="nb">1</span>)
+<span class="fn">plot_acf</span>(series, lags=<span class="nb">40</span>, ax=axes3[<span class="nb">0</span>])
+<span class="fn">plot_pacf</span>(series, lags=<span class="nb">40</span>, ax=axes3[<span class="nb">1</span>])
+plt.<span class="fn">tight_layout</span>()
+
+<span class="cm"># ── 7. 잔차 산점도 행렬 ───────────────────────────────</span>
+<span class="kw">from</span> statsmodels.graphics.plot_grids <span class="kw">import</span> plot_partregress_grid
+plot_partregress_grid(result)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     빅분기·ADP
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="adp" data-tags="linear glm tsa test">
+  <div class="section-hd">
+    <span class="section-num">18</span>
+    <span class="section-title">빅분기 · ADP · ADsP 핵심 포인트</span>
+    <span class="section-sub">단골 출제 패턴 · 정답 코드 · 함정 총정리</span>
+  </div>
+
+  <div class="card-grid-2" style="margin-bottom:16px">
+    <div class="callout gold">
+      <div class="callout-title">⚡ 회귀분석 단골 출제 (빅분기 유형 1·2)</div>
+      <div class="callout-body">
+        1. <code>sm.add_constant(X)</code> — 상수항 추가 <strong>필수</strong>. 누락 시 절편 없는 회귀<br>
+        2. <code>result.summary()</code> → R², F-stat, p-value 정확히 읽기<br>
+        3. <code>result.params</code>, <code>result.pvalues</code> 개별 접근<br>
+        4. Formula API: <code>smf.ols('y ~ x1 + x2', data=df).fit()</code><br>
+        5. <code>anova_lm(model, typ=3)</code> — Type III SS가 표준
+      </div>
+    </div>
+    <div class="callout purple">
+      <div class="callout-title">⚡ 시계열 단골 출제 (ADP)</div>
+      <div class="callout-body">
+        1. ADF 검정: p &lt; 0.05 → 정상, p ≥ 0.05 → 비정상 (차분 필요)<br>
+        2. KPSS는 <strong>반대</strong>: H₀=정상, p &lt; 0.05 → 비정상<br>
+        3. <code>ARIMA(p,d,q)</code>: ACF→q 결정, PACF→p 결정<br>
+        4. 계절성: <code>SARIMAX(order, seasonal_order=(P,D,Q,s))</code><br>
+        5. <code>res.get_forecast(steps=n)</code> → 예측 + 신뢰구간
+      </div>
+    </div>
+    <div class="callout blue">
+      <div class="callout-title">⚡ 통계 검정 단골 출제</div>
+      <div class="callout-body">
+        1. t검정: <code>ws.ttest_mean()</code> / <code>ws.CompareMeans().ttest_ind()</code><br>
+        2. 비율: <code>proportions_ztest(count, nobs, value=p0)</code><br>
+        3. ANOVA: <code>smf.ols().fit()</code> → <code>anova_lm()</code><br>
+        4. 사후검정: <code>pairwise_tukeyhsd(data, groups)</code><br>
+        5. 다중검정 보정: <code>multipletests(p_values, method='fdr_bh')</code>
+      </div>
+    </div>
+    <div class="callout red">
+      <div class="callout-title">⚠️ 자주 틀리는 함정 총정리</div>
+      <div class="callout-body">
+        1. <strong>add_constant 누락</strong>: smf는 자동, sm은 수동 추가<br>
+        2. <strong>ADF vs KPSS 귀무가설 반대</strong> 혼동<br>
+        3. <strong>다중 분류 AUC</strong>: sklearn의 roc_auc_score(multi_class='ovr')<br>
+        4. <strong>GLM deviance</strong>: OLS의 RSS와 다름<br>
+        5. <strong>MNLogit 해석</strong>: 기준 범주 대비 로그 오즈비<br>
+        6. <strong>VAR 정상성</strong>: 각 변수 ADF 검정 후 차분해야 적합
+      </div>
+    </div>
+  </div>
+
+  <div class="full-card">
+    <div class="full-card-title">📋 완전한 회귀분석 실전 템플릿 <span class="badge">복붙 가능</span></div>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="cp('tmpl1')">복사</button></div>
+      <pre id="tmpl1"><span class="cm"># ═══════════════════════════════════════════════════════</span>
+<span class="cm"># statsmodels 회귀분석 실전 템플릿 (빅분기·ADP 대응)</span>
+<span class="cm"># ═══════════════════════════════════════════════════════</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">import</span> statsmodels.formula.api <span class="kw">as</span> smf
+<span class="kw">from</span> statsmodels.stats.stattools <span class="kw">import</span> durbin_watson, jarque_bera
+<span class="kw">from</span> statsmodels.stats.diagnostic <span class="kw">import</span> het_breuschpagan
+<span class="kw">from</span> statsmodels.stats.outliers_influence <span class="kw">import</span> variance_inflation_factor
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> shapiro
+
+<span class="cm"># ── STEP 1: 데이터 준비 ───────────────────────────────</span>
+df = pd.<span class="fn">read_csv</span>(<span class="st">'data.csv'</span>)
+y = df[<span class="st">'target'</span>]
+X = df[[<span class="st">'x1'</span>, <span class="st">'x2'</span>, <span class="st">'x3'</span>]]
+
+<span class="cm"># ── STEP 2: 다중공선성 사전 확인 (VIF) ───────────────</span>
+X_vif = sm.<span class="fn">add_constant</span>(X)
+<span class="kw">for</span> i, col <span class="kw">in</span> <span class="fn">enumerate</span>(X_vif.columns):
+    vif = <span class="fn">variance_inflation_factor</span>(X_vif.values, i)
+    <span class="fn">print</span>(<span class="st">f"VIF({col}): {vif:.2f}"</span>)   <span class="cm"># >10 → 제거 고려</span>
+
+<span class="cm"># ── STEP 3: OLS 모델 ──────────────────────────────────</span>
+<span class="cm"># 방법 A: sm.OLS (배열 기반)</span>
+X_const = sm.<span class="fn">add_constant</span>(X)           <span class="cm"># ← 반드시!</span>
+model   = sm.<span class="fn">OLS</span>(y, X_const)
+result  = model.<span class="fn">fit</span>()
+
+<span class="cm"># 방법 B: smf.ols (Formula 기반, 더 편리)</span>
+result = smf.<span class="fn">ols</span>(<span class="st">'target ~ x1 + x2 + x3'</span>, data=df).<span class="fn">fit</span>()
+
+<span class="cm"># ── STEP 4: 결과 확인 ─────────────────────────────────</span>
+<span class="fn">print</span>(result.<span class="fn">summary</span>())
+
+<span class="cm"># 핵심 지표 추출</span>
+<span class="fn">print</span>(<span class="st">f"\nR²:          {result.rsquared:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Adj. R²:     {result.rsquared_adj:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"F-stat:      {result.fvalue:.4f}  (p={result.f_pvalue:.4f})"</span>)
+<span class="fn">print</span>(<span class="st">f"AIC:         {result.aic:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"BIC:         {result.bic:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">"\n계수 & 유의성:"</span>)
+<span class="fn">print</span>(pd.<span class="fn">DataFrame</span>({
+    <span class="st">'coef'</span>:  result.params,
+    <span class="st">'std'</span>:   result.bse,
+    <span class="st">'t'</span>:     result.tvalues,
+    <span class="st">'p'</span>:     result.pvalues,
+    <span class="st">'sig'</span>:   result.pvalues.<span class="fn">apply</span>(<span class="kw">lambda</span> p:
+        <span class="st">'***'</span> <span class="kw">if</span> p<<span class="nb">0.001</span> <span class="kw">else</span>
+        <span class="st">'**'</span>  <span class="kw">if</span> p<<span class="nb">0.01</span>  <span class="kw">else</span>
+        <span class="st">'*'</span>   <span class="kw">if</span> p<<span class="nb">0.05</span>  <span class="kw">else</span>
+        <span class="st">'.'</span>   <span class="kw">if</span> p<<span class="nb">0.1</span>   <span class="kw">else</span> <span class="st">''</span>)
+}).<span class="fn">round</span>(<span class="nb">4</span>))
+
+<span class="cm"># ── STEP 5: 가정 진단 ─────────────────────────────────</span>
+<span class="fn">print</span>(<span class="st">"\n[가정 진단]"</span>)
+
+<span class="cm"># ① 정규성</span>
+sw_stat, sw_p = <span class="fn">shapiro</span>(result.resid)
+<span class="fn">print</span>(<span class="st">f"정규성(Shapiro): p={sw_p:.4f} → {'OK' if sw_p>0.05 else '위반'}"</span>)
+
+<span class="cm"># ② 자기상관</span>
+dw = <span class="fn">durbin_watson</span>(result.resid)
+<span class="fn">print</span>(<span class="st">f"자기상관(D-W):   {dw:.4f} → {'OK' if 1.5<dw<2.5 else '의심'}"</span>)
+
+<span class="cm"># ③ 이분산</span>
+_, bp_p, _, _ = <span class="fn">het_breuschpagan</span>(result.resid, result.model.exog)
+<span class="fn">print</span>(<span class="st">f"이분산(BP):      p={bp_p:.4f} → {'OK' if bp_p>0.05 else '이분산'}"</span>)
+
+<span class="cm"># ── STEP 6: 예측 ──────────────────────────────────────</span>
+y_hat = result.fittedvalues     <span class="cm"># 훈련 데이터 예측값</span>
+resid = result.resid             <span class="cm"># 잔차</span>
+
+X_new = pd.<span class="fn">DataFrame</span>({<span class="st">'x1'</span>:[<span class="nb">5</span>], <span class="st">'x2'</span>:[<span class="nb">10</span>], <span class="st">'x3'</span>:[<span class="nb">3</span>]})
+pred  = result.<span class="fn">get_prediction</span>(sm.<span class="fn">add_constant</span>(X_new))
+ci    = pred.<span class="fn">summary_frame</span>(alpha=<span class="nb">0.05</span>)
+<span class="fn">print</span>(<span class="st">"\n예측 결과:"</span>)
+<span class="fn">print</span>(ci[[<span class="st">'mean'</span>,<span class="st">'mean_ci_lower'</span>,<span class="st">'mean_ci_upper'</span>]])</pre>
+    </div>
+  </div>
+
+  <!-- 빠른 참조 표 -->
+  <div class="full-card" style="margin-top:16px">
+    <div class="full-card-title">📊 statsmodels 함수 빠른 참조표</div>
+    <table class="param-table">
+      <thead><tr><th>목적</th><th>sm API</th><th>smf Formula API</th><th>핵심 메서드</th></tr></thead>
+      <tbody>
+        <tr><td class="param-name">선형 회귀</td><td class="param-type">sm.OLS(y,X)</td><td class="param-def">smf.ols('y~x',data)</td><td class="param-desc">.fit().summary()</td></tr>
+        <tr><td class="param-name">가중 회귀</td><td class="param-type">sm.WLS(y,X,w)</td><td class="param-def">smf.wls('y~x',w=)</td><td class="param-desc">.fit()</td></tr>
+        <tr><td class="param-name">로지스틱</td><td class="param-type">sm.Logit(y,X)</td><td class="param-def">smf.logit('y~x',data)</td><td class="param-desc">.fit(), .get_margeff()</td></tr>
+        <tr><td class="param-name">Probit</td><td class="param-type">sm.Probit(y,X)</td><td class="param-def">smf.probit('y~x',data)</td><td class="param-desc">.fit()</td></tr>
+        <tr><td class="param-name">Poisson</td><td class="param-type">sm.GLM(y,X,family=Poisson)</td><td class="param-def">smf.poisson('y~x')</td><td class="param-desc">.fit(), .deviance</td></tr>
+        <tr><td class="param-name">다항 로짓</td><td class="param-type">sm.MNLogit(y,X)</td><td class="param-def">smf.mnlogit('y~x')</td><td class="param-desc">.fit()</td></tr>
+        <tr><td class="param-name">ARIMA</td><td class="param-type">ARIMA(y, order)</td><td>—</td><td class="param-desc">.fit(), .get_forecast()</td></tr>
+        <tr><td class="param-name">SARIMA</td><td class="param-type">SARIMAX(y, order, seasonal)</td><td>—</td><td class="param-desc">.fit(), .plot_diagnostics()</td></tr>
+        <tr><td class="param-name">VAR</td><td class="param-type">VAR(df).fit()</td><td>—</td><td class="param-desc">.irf(), .fevd(), .forecast()</td></tr>
+        <tr><td class="param-name">단일 t검정</td><td class="param-type">ws.ttest_mean(x, value)</td><td>—</td><td class="param-desc">t, p, df 반환</td></tr>
+        <tr><td class="param-name">독립 t검정</td><td class="param-type">CompareMeans().ttest_ind()</td><td>—</td><td class="param-desc">usevar='pooled'</td></tr>
+        <tr><td class="param-name">비율 z검정</td><td class="param-type">proportions_ztest(count,n)</td><td>—</td><td class="param-desc">z, p 반환</td></tr>
+        <tr><td class="param-name">일원 ANOVA</td><td>—</td><td class="param-def">smf.ols('y~C(g)').fit()</td><td class="param-desc">anova_lm(result, typ=3)</td></tr>
+        <tr><td class="param-name">Tukey HSD</td><td class="param-type">pairwise_tukeyhsd(data,g)</td><td>—</td><td class="param-desc">.summary()</td></tr>
+        <tr><td class="param-name">ADF 검정</td><td class="param-type">ts.adfuller(series)</td><td>—</td><td class="param-desc">stat, p, lag, cv 반환</td></tr>
+        <tr><td class="param-name">Holt-Winters</td><td class="param-type">ExponentialSmoothing()</td><td>—</td><td class="param-desc">.fit(), .forecast()</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /content-area -->
+</main>
+
+<script>
+/* ═══════════════════════════════════════════
+   SEARCH & FILTER
+═══════════════════════════════════════════ */
+function doSearch(q){
+  q = q.toLowerCase().trim();
+  const sections = document.querySelectorAll('.section');
+  const cards    = document.querySelectorAll('.ref-card, .ds-card, .full-card');
+  let anyVisible = false;
+
+  sections.forEach(sec=>{
+    if(!q){ sec.style.display=''; anyVisible=true; return; }
+    const text = (sec.textContent + ' ' + (sec.dataset.search||'')).toLowerCase();
+    const match = text.includes(q);
+    sec.style.display = match ? '' : 'none';
+    if(match) anyVisible = true;
+  });
+  document.getElementById('noResults').classList.toggle('show', !anyVisible && q);
+}
+
+let activeTag='all';
+function filterTag(tag, btn){
+  activeTag = tag;
+  document.querySelectorAll('.filter-tag').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(sec=>{
+    if(tag==='all'){ sec.style.display=''; return; }
+    const tags = (sec.dataset.tags||'').split(' ');
+    sec.style.display = tags.includes(tag) ? '' : 'none';
+  });
+}
+
+/* ═══════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════ */
+function switchTab(group, id){
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll(`.tab-btn`).forEach(b=>{
+    if(b.getAttribute('onclick')?.includes(`'${group}','${id}'`)) b.classList.add('active');
+    else if(b.getAttribute('onclick')?.includes(`'${group}'`)) b.classList.remove('active');
+  });
+  const panel = document.getElementById(`${group}-${id}`);
+  if(panel) panel.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR ACTIVE
+═══════════════════════════════════════════ */
+function activeSidebar(el){
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   COPY
+═══════════════════════════════════════════ */
+function cp(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText).then(()=>{
+    const wrap = el.closest('.code-wrap');
+    const btn  = wrap?.querySelector('.copy-btn');
+    if(btn){ const orig=btn.textContent; btn.textContent='복사됨!'; setTimeout(()=>btn.textContent=orig,1500); }
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SCROLL SPY
+═══════════════════════════════════════════ */
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const id = entry.target.id;
+      document.querySelectorAll('.sidebar-item').forEach(item=>{
+        const href = item.getAttribute('href');
+        item.classList.toggle('active', href === '#'+id);
+      });
+    }
+  });
+},{threshold:0.3,rootMargin:'-58px 0px -60% 0px'});
+
+document.querySelectorAll('.section[id]').forEach(sec=>observer.observe(sec));
+</script>
+</body>
+</html>
